@@ -1,12 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "cd client && npm install && npm run build",
   "outputDirectory": "dist",
-  "functions": {
-    "api/*.js": {
-      "includeFiles": "server/**"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",
