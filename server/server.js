@@ -63,7 +63,7 @@ const getTwilioClient = () => {
  * @desc    Generate random 6-digit OTP, store temporarily with 5-min expiry,
  *          and send to BOTH Gmail (Nodemailer) and Mobile (Twilio)
  */
-app.post('/api/send-otp', async (req, res) => {
+app.post(['/api/send-otp', '/send-otp'], async (req, res) => {
   try {
     const { email, phone } = req.body;
 
@@ -174,7 +174,7 @@ app.post('/api/send-otp', async (req, res) => {
  * @desc    Matches user input OTP against stored temporary data,
  *          and clears it upon successful verification or expiry.
  */
-app.post('/api/verify-otp', (req, res) => {
+app.post(['/api/verify-otp', '/verify-otp'], (req, res) => {
   try {
     const { email, phone, otp } = req.body;
 
@@ -238,15 +238,20 @@ app.post('/api/verify-otp', (req, res) => {
 });
 
 // =========================================================================
-// IMOVIES APPLICATION API ROUTES
+// IMOVIES APPLICATION API ROUTES (Dual mounted for Local & Vercel serverless)
 // =========================================================================
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/movies', require('./routes/movieRoutes'));
-app.use('/api/showtimes', require('./routes/showtimeRoutes'));
-app.use('/api/bookings', require('./routes/bookingRoutes'));
+const authRoutes = require('./routes/authRoutes');
+const movieRoutes = require('./routes/movieRoutes');
+const showtimeRoutes = require('./routes/showtimeRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
+
+app.use(['/api/auth', '/auth'], authRoutes);
+app.use(['/api/movies', '/movies'], movieRoutes);
+app.use(['/api/showtimes', '/showtimes'], showtimeRoutes);
+app.use(['/api/bookings', '/bookings'], bookingRoutes);
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
+app.get(['/api/health', '/health'], (req, res) => {
   res.json({
     status: 'healthy',
     name: 'IMovies - Movie ticket booking made simple',
@@ -260,7 +265,7 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-if (!process.env.VERCEL) {
+if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`====================================================`);
     console.log(`🎬 IMovies Backend running on http://localhost:${PORT}`);
@@ -272,6 +277,7 @@ if (!process.env.VERCEL) {
 
 // Connect to DB asynchronously without blocking server startup
 const initDB = async () => {
+  if (process.env.VERCEL || require.main !== module) return;
   try {
     const connected = await connectDB();
     if (connected) {
