@@ -260,13 +260,15 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`====================================================`);
-  console.log(`🎬 IMovies Backend running on http://localhost:${PORT}`);
-  console.log(`🛡️ Real OTP verification UI: http://localhost:${PORT}`);
-  console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`====================================================`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`====================================================`);
+    console.log(`🎬 IMovies Backend running on http://localhost:${PORT}`);
+    console.log(`🛡️ Real OTP verification UI: http://localhost:${PORT}`);
+    console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`====================================================`);
+  });
+}
 
 // Connect to DB asynchronously without blocking server startup
 const initDB = async () => {
