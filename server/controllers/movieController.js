@@ -40,16 +40,18 @@ const getMovies = async (req, res) => {
       }
 
       const movies = await Movie.find(query).sort(sortOption);
-      const allGenres = await Movie.distinct('genre');
-      const allLanguages = await Movie.distinct('language');
+      if (movies && movies.length > 0) {
+        const allGenres = await Movie.distinct('genre');
+        const allLanguages = await Movie.distinct('language');
 
-      return res.json({
-        success: true,
-        count: movies.length,
-        genres: allGenres,
-        languages: allLanguages,
-        data: movies,
-      });
+        return res.json({
+          success: true,
+          count: movies.length,
+          genres: allGenres,
+          languages: allLanguages,
+          data: movies,
+        });
+      }
     }
 
     // In-Memory Fallback
