@@ -1,0 +1,30 @@
+{
+  "name": "imovies",
+  "version": "1.0.0",
+  "description": "IMovies - Movie ticket booking made simple (Full-Stack MERN)",
+  "private": true,
+  "scripts": {
+    "server": "npm.cmd --prefix server start",
+    "server:dev": "npm.cmd --prefix server run dev",
+    "client": "npm.cmd --prefix client run dev",
+    "client:build": "npm.cmd --prefix client run build",
+    "seed": "npm.cmd --prefix server run seed",
+    "dev": "concurrently -n \"SERVER,CLIENT\" -c \"bgBlue.bold,bgMagenta.bold\" \"npm.cmd --prefix server run dev\" \"npm.cmd --prefix client run dev\"",
+    "install:all": "npm.cmd --prefix server install && npm.cmd --prefix client install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "keywords": [
+    "mern",
+    "movie-ticket-booking",
+    "react",
+    "express",
+    "mongodb",
+    "nodejs",
+    "bootstrap5",
+    "jwt"
+  ],
+  "author": "IMovies Team",
+  "license": "MIT"
+}
