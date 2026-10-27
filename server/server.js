@@ -48,8 +48,12 @@ const getTwilioClient = () => {
   const sid = (process.env.TWILIO_ACCOUNT_SID || '').trim();
   const token = (process.env.TWILIO_AUTH_TOKEN || '').trim();
 
-  if (sid && token) {
-    return twilio(sid, token);
+  if (sid && token && sid.startsWith('AC') && !sid.includes('dummy')) {
+    try {
+      return twilio(sid, token);
+    } catch (_) {
+      return null;
+    }
   }
   return null;
 };

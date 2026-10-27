@@ -127,7 +127,7 @@ const sendSmsOtp = async (phoneNumber, otp) => {
   const twilioVerifySid = (process.env.TWILIO_VERIFY_SERVICE_SID || 'VAec8d4c11ab28cd62876c2c8e3ce8215e').trim();
 
   // 1. Send via Twilio Verify (Real cellular SMS directly to SIM card)
-  if (twilioSid && twilioAuthToken) {
+  if (twilioSid && twilioAuthToken && twilioSid.startsWith('AC') && !twilioSid.includes('dummy')) {
     try {
       const twilio = require('twilio');
       const client = twilio(twilioSid, twilioAuthToken);
@@ -175,7 +175,7 @@ const checkSmsVerification = async (phoneNumber, code) => {
   const twilioAuthToken = (process.env.TWILIO_AUTH_TOKEN || '').trim();
   const twilioVerifySid = (process.env.TWILIO_VERIFY_SERVICE_SID || 'VAec8d4c11ab28cd62876c2c8e3ce8215e').trim();
 
-  if (twilioSid && twilioAuthToken) {
+  if (twilioSid && twilioAuthToken && twilioSid.startsWith('AC') && !twilioSid.includes('dummy')) {
     try {
       const twilio = require('twilio');
       const client = twilio(twilioSid, twilioAuthToken);
