@@ -10,11 +10,19 @@
   },
   "dependencies": {
     "axios": "^1.7.9",
+    "bcryptjs": "^2.4.3",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5",
+    "nodemailer": "^10.2.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.28.0"
+    "react-router-dom": "^6.28.0",
+    "twilio": "^6.2.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.18",
@@ -23,4 +31,3 @@
     "vite": "^6.0.7"
   }
 }
-
