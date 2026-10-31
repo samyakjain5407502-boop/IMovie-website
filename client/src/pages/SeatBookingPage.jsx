@@ -3,6 +3,47 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import API from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
+// ─── FORMAT BADGE CONFIG ─────────────────────────────────────────────────────
+const FORMAT_CONFIG = {
+  '2D':           { color: '#6c757d', bg: '#343a40',  icon: '🎬', label: '2D'           },
+  '3D':           { color: '#0dcaf0', bg: '#0d3040',  icon: '🥽', label: '3D'           },
+  'RealD 3D':     { color: '#0dcaf0', bg: '#0d3040',  icon: '🥽', label: 'RealD 3D'     },
+  'IMAX 3D':      { color: '#fff',    bg: '#000',     icon: '🔭', label: 'IMAX 3D'      },
+  'IMAX Laser':   { color: '#fff',    bg: '#000',     icon: '🔭', label: 'IMAX LASER'   },
+  'Dolby Atmos':  { color: '#fff',    bg: '#1a1a2e',  icon: '🔊', label: 'DOLBY ATMOS'  },
+  'Dolby Cinema': { color: '#ff6b35', bg: '#1a0a00',  icon: '🎭', label: 'DOLBY CINEMA' },
+  '4DX':          { color: '#ffd700', bg: '#1a1400',  icon: '💥', label: '4DX'          },
+  '4DX 3D':       { color: '#ffd700', bg: '#1a1400',  icon: '💥', label: '4DX 3D'       },
+  'ScreenX':      { color: '#9b59b6', bg: '#1a0d2e',  icon: '📽️', label: 'ScreenX'      },
+  '4K HDR':       { color: '#2ecc71', bg: '#0d2015',  icon: '🌟', label: '4K HDR'       },
+};
+
+const FormatBadge = ({ format }) => {
+  const cfg = FORMAT_CONFIG[format] || FORMAT_CONFIG['2D'];
+  return (
+    <span
+      style={{
+        background: cfg.bg,
+        color: cfg.color,
+        border: `2px solid ${cfg.color}`,
+        borderRadius: '8px',
+        padding: '4px 14px',
+        fontSize: '0.82rem',
+        fontWeight: '800',
+        letterSpacing: '0.04em',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '5px',
+        whiteSpace: 'nowrap',
+        boxShadow: `0 0 10px ${cfg.color}55`,
+      }}
+    >
+      <span style={{ fontSize: '1rem' }}>{cfg.icon}</span>
+      {cfg.label}
+    </span>
+  );
+};
+
 const SNACKS_MENU = [
   { id: 'popcorn', name: 'Caramel & Cheese Popcorn Tub', price: 290, icon: '🍿', desc: 'Freshly popped warm gourmet tub' },
   { id: 'nachos', name: 'Crispy Tortilla Nachos & Warm Salsa', price: 240, icon: '🧀', desc: 'With melted jalapeno cheese dip' },
@@ -190,16 +231,16 @@ const SeatBookingPage = () => {
                 <i className="bi bi-arrow-left"></i>
               </Link>
               <div>
-                <div className="d-flex align-items-center gap-2 mb-1">
+                <div className="d-flex align-items-center gap-2 mb-1 flex-wrap">
                   <h4 className="text-white fw-bold mb-0">{showtime.movieId?.title}</h4>
                   <span className="badge bg-secondary-subtle text-light">{showtime.movieId?.language}</span>
+                  <FormatBadge format={showtime.format} />
                 </div>
                 <div className="text-secondary small d-flex flex-wrap align-items-center gap-2">
-                  <span><i className="bi bi-geo-alt me-1 text-danger"></i>{showtime.theaterName}</span>
+                  <span><i className="bi bi-geo-alt me-1 text-danger"></i>{showtime.cinemaName || showtime.theaterName}</span>
+                  {showtime.location && <><span>•</span><span className="text-secondary" style={{ fontSize: '0.72rem' }}>{showtime.location}</span></>}
                   <span>•</span>
                   <span>{showtime.screen}</span>
-                  <span>•</span>
-                  <span className="badge bg-danger-subtle text-danger">{showtime.format}</span>
                 </div>
               </div>
             </div>
@@ -212,6 +253,11 @@ const SeatBookingPage = () => {
                 <div className="text-secondary small">
                   <i className="bi bi-calendar3 me-1"></i>{showtime.date}
                 </div>
+                {showtime.city && (
+                  <div className="text-secondary small mt-1">
+                    <i className="bi bi-buildings me-1"></i>{showtime.city}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -250,7 +296,7 @@ const SeatBookingPage = () => {
                 </div>
 
                 {/* Seat Legend */}
-                <div className="d-flex flex-wrap justify-content-center gap-4 mb-4 small">
+                <div className="d-flex flex-wrap justify-content-center gap-4 mb-3 small">
                   <div className="d-flex align-items-center gap-2">
                     <div className="seat-item available" style={{ width: '22px', height: '22px', cursor: 'default' }}></div>
                     <span className="text-secondary">Available</span>
@@ -263,6 +309,18 @@ const SeatBookingPage = () => {
                     <div className="seat-item reserved" style={{ width: '22px', height: '22px', cursor: 'default' }}></div>
                     <span className="text-secondary">Booked / Occupied</span>
                   </div>
+                </div>
+                {/* Tier Pricing Banner */}
+                <div className="d-flex flex-wrap justify-content-center gap-3 mb-4 small">
+                  <span className="px-3 py-1 rounded-pill border border-secondary text-secondary" style={{ fontSize: '0.72rem' }}>
+                    🪑 BUDGET (A-C) — ₹{showtime.pricing?.standard ?? 140}
+                  </span>
+                  <span className="px-3 py-1 rounded-pill border border-info text-info" style={{ fontSize: '0.72rem' }}>
+                    💺 PREMIUM (D-F) — ₹{showtime.pricing?.premium ?? 240}
+                  </span>
+                  <span className="px-3 py-1 rounded-pill border border-warning text-warning" style={{ fontSize: '0.72rem' }}>
+                    🛋️ RECLINER (G-H) — ₹{showtime.pricing?.recliner ?? 380}
+                  </span>
                 </div>
 
                 {/* Seat Grid */}

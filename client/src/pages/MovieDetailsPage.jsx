@@ -2,6 +2,60 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import API from '../services/api';
 
+// ─── FORMAT BADGE CONFIG ─────────────────────────────────────────────────────
+const FORMAT_CONFIG = {
+  '2D':           { color: '#6c757d', bg: '#343a40',  icon: '🎬', label: '2D'           },
+  '3D':           { color: '#0dcaf0', bg: '#0d3040',  icon: '🥽', label: '3D'           },
+  'RealD 3D':     { color: '#0dcaf0', bg: '#0d3040',  icon: '🥽', label: 'RealD 3D'     },
+  'IMAX 3D':      { color: '#fff',    bg: '#000',     icon: '🔭', label: 'IMAX 3D'      },
+  'IMAX Laser':   { color: '#fff',    bg: '#000',     icon: '🔭', label: 'IMAX LASER'   },
+  'Dolby Atmos':  { color: '#fff',    bg: '#1a1a2e',  icon: '🔊', label: 'DOLBY ATMOS'  },
+  'Dolby Cinema': { color: '#ff6b35', bg: '#1a0a00',  icon: '🎭', label: 'DOLBY CINEMA' },
+  '4DX':          { color: '#ffd700', bg: '#1a1400',  icon: '💥', label: '4DX'          },
+  '4DX 3D':       { color: '#ffd700', bg: '#1a1400',  icon: '💥', label: '4DX 3D'       },
+  'ScreenX':      { color: '#9b59b6', bg: '#1a0d2e',  icon: '📽️', label: 'ScreenX'      },
+  '4K HDR':       { color: '#2ecc71', bg: '#0d2015',  icon: '🌟', label: '4K HDR'       },
+};
+
+const FORMAT_PRICES_DISPLAY = {
+  '2D':           'Budget ₹140 | Premium ₹240 | Recliner ₹380',
+  '3D':           'Budget ₹170 | Premium ₹280 | Recliner ₹450',
+  'RealD 3D':     'Budget ₹190 | Premium ₹300 | Recliner ₹470',
+  'IMAX 3D':      'Budget ₹280 | Premium ₹400 | Recliner ₹600',
+  'IMAX Laser':   'Budget ₹320 | Premium ₹450 | Recliner ₹650',
+  'Dolby Atmos':  'Budget ₹220 | Premium ₹340 | Recliner ₹500',
+  'Dolby Cinema': 'Budget ₹260 | Premium ₹380 | Recliner ₹550',
+  '4DX':          'Budget ₹350 | Premium ₹480 | Recliner ₹700',
+  '4DX 3D':       'Budget ₹380 | Premium ₹520 | Recliner ₹750',
+  'ScreenX':      'Budget ₹300 | Premium ₹420 | Recliner ₹580',
+  '4K HDR':       'Budget ₹200 | Premium ₹320 | Recliner ₹490',
+};
+
+const FormatBadge = ({ format, size = 'sm' }) => {
+  const cfg = FORMAT_CONFIG[format] || FORMAT_CONFIG['2D'];
+  return (
+    <span
+      style={{
+        background: cfg.bg,
+        color: cfg.color,
+        border: `1.5px solid ${cfg.color}`,
+        borderRadius: '6px',
+        padding: size === 'lg' ? '4px 12px' : '2px 8px',
+        fontSize: size === 'lg' ? '0.85rem' : '0.72rem',
+        fontWeight: '700',
+        letterSpacing: '0.03em',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '4px',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      <span style={{ fontSize: size === 'lg' ? '1rem' : '0.75rem' }}>{cfg.icon}</span>
+      {cfg.label}
+    </span>
+  );
+};
+
 const MovieDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -12,6 +66,8 @@ const MovieDetailsPage = () => {
   const [availableDates, setAvailableDates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedCity, setSelectedCity] = useState('All');
+  const [selectedFormat, setSelectedFormat] = useState('All');
 
   // Helper to format dates
   const formatDateDisplay = (dateStr) => {
@@ -29,7 +85,7 @@ const MovieDetailsPage = () => {
     if (diffDays === 0) label = `Today, ${dayNum} ${monthName}`;
     if (diffDays === 1) label = `Tomorrow, ${dayNum} ${monthName}`;
 
-    return { label, fullDate: dateStr, dayNum, dayName };
+    return { label, fullDate: dateStr, dayNum, dayName, monthName };
   };
 
   useEffect(() => {
@@ -39,16 +95,13 @@ const MovieDetailsPage = () => {
   const fetchMovieDetails = async () => {
     try {
       setLoading(true);
-      // Fetch movie info
       const movieRes = await API.get(`/movies/${id}`);
       setMovie(movieRes.data.data);
 
-      // Fetch showtimes for this movie
       const showtimesRes = await API.get(`/showtimes/movie/${id}`);
       const stData = showtimesRes.data.data || [];
       setShowtimes(stData);
 
-      // Extract unique dates
       const dates = Array.from(new Set(stData.map((s) => s.date))).sort();
       setAvailableDates(dates);
 
@@ -66,17 +119,31 @@ const MovieDetailsPage = () => {
   // Filter showtimes for selected date
   const filteredShowtimes = showtimes.filter((s) => s.date === selectedDate);
 
-  // Group showtimes by theater
-  const showtimesByTheater = filteredShowtimes.reduce((acc, curr) => {
-    if (!acc[curr.theaterName]) {
-      acc[curr.theaterName] = {
-        theaterName: curr.theaterName,
+  // Get unique cities and formats for filter
+  const allCities = ['All', ...Array.from(new Set(filteredShowtimes.map(s => s.city || 'Other').filter(Boolean))).sort()];
+  const allFormats = ['All', ...Array.from(new Set(filteredShowtimes.map(s => s.format))).sort()];
+
+  // Apply city + format filters
+  const filteredByFilters = filteredShowtimes.filter(s => {
+    const cityOk = selectedCity === 'All' || s.city === selectedCity;
+    const fmtOk = selectedFormat === 'All' || s.format === selectedFormat;
+    return cityOk && fmtOk;
+  });
+
+  // Group showtimes by theater+format
+  const showtimesByTheater = filteredByFilters.reduce((acc, curr) => {
+    const key = `${curr.cinemaName || curr.theaterName}||${curr.format}`;
+    if (!acc[key]) {
+      acc[key] = {
+        theaterName: curr.cinemaName || curr.theaterName,
+        location: curr.location,
+        city: curr.city,
         screen: curr.screen,
         format: curr.format,
         times: [],
       };
     }
-    acc[curr.theaterName].times.push(curr);
+    acc[key].times.push(curr);
     return acc;
   }, {});
 
@@ -100,6 +167,10 @@ const MovieDetailsPage = () => {
       </div>
     );
   }
+
+  const statusBadge = movie.status === 'COMING_SOON'
+    ? <span className="badge bg-warning text-dark px-3 py-1 fw-bold text-uppercase">Coming Soon</span>
+    : <span className="badge bg-danger px-3 py-1 fw-bold text-uppercase">Now Showing</span>;
 
   return (
     <div className="pb-5">
@@ -128,7 +199,7 @@ const MovieDetailsPage = () => {
                     }}
                   />
                   <div className="movie-rating-badge">
-                    <i className="bi bi-star-fill text-warning me-1"></i> {movie.rating?.toFixed(1)}
+                    <i className="bi bi-star-fill text-warning me-1"></i> {movie.rating?.toFixed(1) || 'N/A'}
                   </div>
                   <div className="movie-cert-badge">{movie.certification}</div>
                 </div>
@@ -138,9 +209,7 @@ const MovieDetailsPage = () => {
             {/* Movie Info Details */}
             <div className="col-lg-9 col-md-8">
               <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
-                <span className="badge bg-danger px-3 py-1 fw-bold text-uppercase">
-                  Now Showing
-                </span>
+                {statusBadge}
                 <span className="badge bg-dark border border-secondary text-light px-3 py-1">
                   {movie.language}
                 </span>
@@ -157,7 +226,7 @@ const MovieDetailsPage = () => {
               <div className="d-flex flex-wrap align-items-center gap-4 text-secondary mb-3">
                 <div className="d-flex align-items-center gap-1 text-warning fw-bold fs-5">
                   <i className="bi bi-star-fill"></i>
-                  <span>{movie.rating?.toFixed(1)}</span>
+                  <span>{movie.rating?.toFixed(1) || 'N/A'}</span>
                   <span className="text-secondary small fw-normal">/ 10</span>
                 </div>
                 <div>
@@ -175,7 +244,7 @@ const MovieDetailsPage = () => {
               </div>
 
               {/* Genres */}
-              <div className="d-flex flex-wrap gap-2 mb-4">
+              <div className="d-flex flex-wrap gap-2 mb-3">
                 {movie.genre?.map((g) => (
                   <span key={g} className="badge bg-secondary-subtle border border-secondary border-opacity-50 text-light px-3 py-2 rounded-pill">
                     {g}
@@ -191,9 +260,11 @@ const MovieDetailsPage = () => {
 
               {/* CTA anchor */}
               <div className="d-flex flex-wrap gap-3">
-                <a href="#showtimes-section" className="btn btn-cinema btn-lg px-4 d-flex align-items-center gap-2">
-                  <i className="bi bi-ticket-perforated-fill fs-5"></i> View Showtimes & Seats
-                </a>
+                {movie.status !== 'COMING_SOON' && (
+                  <a href="#showtimes-section" className="btn btn-cinema btn-lg px-4 d-flex align-items-center gap-2">
+                    <i className="bi bi-ticket-perforated-fill fs-5"></i> View Showtimes & Book Tickets
+                  </a>
+                )}
                 {movie.trailerUrl && (
                   <a
                     href={movie.trailerUrl}
@@ -242,7 +313,7 @@ const MovieDetailsPage = () => {
             <div className="badge bg-warning text-dark fs-6 px-3 py-2 mb-3 fw-bold shadow">
               <i className="bi bi-rocket-takeoff-fill me-1"></i> UPCOMING CINEMATIC RELEASE
             </div>
-            <h2 className="text-white fw-bold mb-2">Releasing Soon in IMovie Multiplexes!</h2>
+            <h2 className="text-white fw-bold mb-2">Releasing Soon in IMovies Multiplexes!</h2>
             <p className="text-secondary lead mx-auto mb-4" style={{ maxWidth: '650px', fontSize: '1.05rem' }}>
               Advance ticket bookings for <strong className="text-white">{movie.title}</strong> will open shortly across all theaters in India. Watch the official teaser trailer below and get ready!
             </p>
@@ -268,100 +339,167 @@ const MovieDetailsPage = () => {
           </div>
         ) : (
           <div className="glass-card p-4">
-          <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 border-bottom border-secondary border-opacity-25 pb-3">
-            <div>
-              <h3 className="text-white fw-bold mb-1 d-flex align-items-center gap-2">
-                <i className="bi bi-clock-history text-danger"></i> Available Showtimes
-              </h3>
-              <p className="text-secondary small mb-0">
-                Select your preferred date, theater, and time slot to pick seats.
-              </p>
+            {/* Header row with date filters */}
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 border-bottom border-secondary border-opacity-25 pb-3">
+              <div>
+                <h3 className="text-white fw-bold mb-1 d-flex align-items-center gap-2">
+                  <i className="bi bi-clock-history text-danger"></i> Available Showtimes
+                </h3>
+                <p className="text-secondary small mb-0">
+                  {filteredByFilters.length} show{filteredByFilters.length !== 1 ? 's' : ''} across {Object.keys(showtimesByTheater).length} screen{Object.keys(showtimesByTheater).length !== 1 ? 's' : ''} on this date
+                </p>
+              </div>
+
+              {/* Date Selection Tabs */}
+              <div className="d-flex flex-wrap gap-2">
+                {availableDates.map((dateStr) => {
+                  const info = formatDateDisplay(dateStr);
+                  const isSelected = selectedDate === dateStr;
+                  return (
+                    <button
+                      key={dateStr}
+                      onClick={() => setSelectedDate(dateStr)}
+                      className={`btn text-center py-2 px-3 rounded-3 transition-all ${
+                        isSelected ? 'btn-danger shadow' : 'btn-outline-cinema'
+                      }`}
+                    >
+                      <div className="small fw-bold text-uppercase" style={{ fontSize: '0.65rem' }}>{info.dayName}</div>
+                      <div className="fs-5 fw-extrabold">{info.dayNum}</div>
+                      <div className="small" style={{ fontSize: '0.65rem' }}>{info.monthName}</div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Date Selection Tabs */}
-            <div className="d-flex flex-wrap gap-2">
-              {availableDates.map((dateStr) => {
-                const info = formatDateDisplay(dateStr);
-                const isSelected = selectedDate === dateStr;
-                return (
-                  <button
-                    key={dateStr}
-                    onClick={() => setSelectedDate(dateStr)}
-                    className={`btn text-center py-2 px-3 rounded-3 transition-all ${
-                      isSelected
-                        ? 'btn-danger shadow'
-                        : 'btn-outline-cinema'
-                    }`}
-                  >
-                    <div className="small fw-bold text-uppercase">{info.dayName}</div>
-                    <div className="fs-5 fw-extrabold">{info.dayNum}</div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Showtimes list */}
-          {Object.keys(showtimesByTheater).length === 0 ? (
-            <div className="text-center py-5">
-              <i className="bi bi-calendar-x fs-1 text-secondary opacity-50 mb-3 d-block"></i>
-              <h5 className="text-white">No showtimes scheduled for this date</h5>
-              <p className="text-secondary small">Please select an alternate date from above.</p>
-            </div>
-          ) : (
-            <div className="d-flex flex-column gap-4">
-              {Object.values(showtimesByTheater).map((th, idx) => (
-                <div key={idx} className="p-3 rounded-3 border border-secondary border-opacity-25 bg-dark bg-opacity-50">
-                  <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                    <div>
-                      <h5 className="text-white fw-bold mb-1 d-flex align-items-center gap-2">
-                        <i className="bi bi-geo-alt-fill text-danger"></i> {th.theaterName}
-                      </h5>
-                      <div className="text-secondary small d-flex align-items-center gap-2">
-                        <span>{th.screen}</span>
-                        <span>•</span>
-                        <span className="badge bg-secondary-subtle text-light">{th.format}</span>
-                        <span>•</span>
-                        <span className="text-success"><i className="bi bi-check-circle me-1"></i>Instant M-Ticket</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Show time buttons */}
-                  <div className="d-flex flex-wrap gap-3">
-                    {th.times.map((st) => {
-                      const isFull = st.availableSeatsCount === 0;
-                      return (
-                        <button
-                          key={st._id}
-                          disabled={isFull}
-                          onClick={() => navigate(`/booking/${st._id}`)}
-                          className={`btn text-start p-3 rounded-3 transition-all ${
-                            isFull
-                              ? 'btn-outline-secondary opacity-50 disabled'
-                              : 'btn-outline-cinema hover-shadow'
-                          }`}
-                          style={{ minWidth: '150px' }}
-                        >
-                          <div className="fw-bold fs-6 text-white mb-1">
-                            <i className="bi bi-clock me-1 text-warning"></i>
-                            {st.time}
-                          </div>
-                          <div className="d-flex justify-content-between align-items-center small text-secondary">
-                            <span>From ₹{st.pricing?.standard || 180}</span>
-                            <span className={st.availableSeatsCount < 15 ? 'text-warning fw-bold' : 'text-success'}>
-                              {isFull ? 'Sold Out' : `${st.availableSeatsCount} left`}
-                            </span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
+            {/* City & Format Filters */}
+            <div className="d-flex flex-wrap gap-3 mb-4 align-items-center">
+              {/* City filter */}
+              <div className="d-flex align-items-center gap-2">
+                <i className="bi bi-geo-alt text-danger"></i>
+                <span className="text-secondary small fw-semibold">City:</span>
+                <div className="d-flex flex-wrap gap-1">
+                  {allCities.map(city => (
+                    <button
+                      key={city}
+                      onClick={() => setSelectedCity(city)}
+                      className={`btn btn-sm py-1 px-2 rounded-pill ${selectedCity === city ? 'btn-danger' : 'btn-outline-secondary'}`}
+                      style={{ fontSize: '0.75rem' }}
+                    >
+                      {city}
+                    </button>
+                  ))}
                 </div>
+              </div>
+            </div>
+
+            {/* Format Filter Row */}
+            <div className="d-flex flex-wrap gap-2 mb-4 align-items-center">
+              <i className="bi bi-display text-warning"></i>
+              <span className="text-secondary small fw-semibold">Format:</span>
+              <button
+                onClick={() => setSelectedFormat('All')}
+                className={`btn btn-sm py-1 px-2 rounded-pill ${selectedFormat === 'All' ? 'btn-warning text-dark' : 'btn-outline-secondary'}`}
+                style={{ fontSize: '0.75rem' }}
+              >
+                All Formats
+              </button>
+              {allFormats.filter(f => f !== 'All').map(fmt => (
+                <button
+                  key={fmt}
+                  onClick={() => setSelectedFormat(fmt)}
+                  style={{
+                    background: selectedFormat === fmt ? (FORMAT_CONFIG[fmt]?.bg || '#222') : 'transparent',
+                    color: selectedFormat === fmt ? (FORMAT_CONFIG[fmt]?.color || '#fff') : '#aaa',
+                    border: `1.5px solid ${FORMAT_CONFIG[fmt]?.color || '#555'}`,
+                    borderRadius: '20px',
+                    padding: '2px 10px',
+                    fontSize: '0.72rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {FORMAT_CONFIG[fmt]?.icon} {fmt}
+                </button>
               ))}
             </div>
-          )}
-        </div>
+
+            {/* Showtimes list */}
+            {Object.keys(showtimesByTheater).length === 0 ? (
+              <div className="text-center py-5">
+                <i className="bi bi-calendar-x fs-1 text-secondary opacity-50 mb-3 d-block"></i>
+                <h5 className="text-white">No showtimes for selected filters</h5>
+                <p className="text-secondary small">Try changing the date, city, or format filter.</p>
+              </div>
+            ) : (
+              <div className="d-flex flex-column gap-4">
+                {Object.values(showtimesByTheater).map((th, idx) => (
+                  <div key={idx} className="p-3 rounded-3 border border-secondary border-opacity-25 bg-dark bg-opacity-50">
+                    <div className="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                      <div>
+                        <h5 className="text-white fw-bold mb-1 d-flex align-items-center gap-2">
+                          <i className="bi bi-geo-alt-fill text-danger"></i> {th.theaterName}
+                        </h5>
+                        <div className="text-secondary small d-flex flex-wrap align-items-center gap-2">
+                          <span><i className="bi bi-pin-map me-1 text-secondary"></i>{th.location}</span>
+                        </div>
+                        <div className="d-flex flex-wrap align-items-center gap-2 mt-2">
+                          <FormatBadge format={th.format} size="lg" />
+                          <span className="text-secondary small">{th.screen}</span>
+                          <span className="text-success small"><i className="bi bi-check-circle me-1"></i>Instant M-Ticket</span>
+                        </div>
+                        {/* Pricing info */}
+                        <div className="mt-1" style={{ fontSize: '0.72rem', color: '#888' }}>
+                          <i className="bi bi-tag me-1"></i>{FORMAT_PRICES_DISPLAY[th.format] || ''}
+                        </div>
+                      </div>
+                      <div className="d-flex gap-2 align-items-center">
+                        {th.city && (
+                          <span className="badge bg-secondary-subtle text-light border border-secondary" style={{ fontSize: '0.7rem' }}>
+                            <i className="bi bi-buildings me-1"></i>{th.city}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Show time buttons */}
+                    <div className="d-flex flex-wrap gap-2">
+                      {th.times.map((st) => {
+                        const isFull = st.availableSeatsCount === 0;
+                        const fillPct = Math.round(((st.totalSeatsCount - st.availableSeatsCount) / st.totalSeatsCount) * 100);
+                        const fillClass = fillPct >= 80 ? 'text-danger' : fillPct >= 50 ? 'text-warning' : 'text-success';
+                        const fillLabel = isFull ? 'Housefull' : fillPct >= 80 ? 'Filling Fast!' : `${st.availableSeatsCount} left`;
+                        return (
+                          <button
+                            key={st._id}
+                            disabled={isFull}
+                            onClick={() => navigate(`/booking/${st._id}`)}
+                            className={`btn text-start p-3 rounded-3 transition-all ${
+                              isFull
+                                ? 'btn-outline-secondary opacity-50 disabled'
+                                : 'btn-outline-cinema hover-shadow'
+                            }`}
+                            style={{ minWidth: '130px' }}
+                          >
+                            <div className="fw-bold fs-6 text-white mb-1">
+                              <i className="bi bi-clock me-1 text-warning"></i>
+                              {st.time}
+                            </div>
+                            <div className="d-flex justify-content-between align-items-center small">
+                              <span className="text-secondary">From ₹{st.pricing?.standard || 140}</span>
+                              <span className={`fw-bold ${isFull ? 'text-danger' : fillClass}`} style={{ fontSize: '0.65rem' }}>
+                                {fillLabel}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </section>
     </div>
@@ -369,4 +507,3 @@ const MovieDetailsPage = () => {
 };
 
 export default MovieDetailsPage;
-
