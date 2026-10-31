@@ -1,56 +1,52 @@
-# 🎬 IMovies - Movie Ticket Booking Made Simple
+# 🎬 IMovies - Movie Ticket Booking Platform
 
-A full-stack **MERN (MongoDB, Express.js, React.js, Node.js)** web application engineered for high-performance movie browsing, real-time seat availability tracking, showtime scheduling, and seamless ticket reservation.
+> **Live Website:** [https://i-movie-website.vercel.app](https://i-movie-website.vercel.app)  
+> **GitHub Repository:** [https://github.com/samyakjain5407502-boop/IMovie-website](https://github.com/samyakjain5407502-boop/IMovie-website)
+
+A full-stack **MERN (MongoDB / In-Memory Serverless, Express.js, React.js, Node.js)** movie ticketing web application engineered with real-world BookMyShow-grade features: multi-city theater networks (including Indore, Mumbai, Delhi, etc.), visual auditorium seat layout with tiered pricing, 11 screen format experiences (3D, 4DX, IMAX 3D, Dolby Cinema, ScreenX), food & beverage concessions, realistic Razorpay checkout simulation, and Twilio SMS Verify OTP login.
 
 ---
 
 ## 🌟 Key Features
 
-### 1. 🔐 User Authentication & Authorization
-- **JWT (JSON Web Token)** secure session management stored in client localStorage.
-- **Bcrypt.js** password hashing (salt rounds: 10).
-- **Protected Routes** in React Router guarding seat checkout and user booking history.
-- **One-Click Demo Login** (`demo@imovies.com` / `password123`) for instant review and testing.
+### 1. 🏙️ City-Isolated Real Theater Network
+- **Indore Multi-Theater Coverage**:
+  - **INOX TI Mall** (Treasure Island Mall, MG Road) — IMAX 3D, 4DX, Dolby Atmos, 2D, 3D
+  - **PVR C21 Mall** (AB Road) — Dolby Cinema, RealD 3D, 2D, 3D
+  - **Cinepolis Orbit Mall** (Vijay Nagar) — 4DX 3D, ScreenX, 2D, 3D
+  - **INOX MR-10 Square** (MR-10 Square) — 4K HDR, 2D, 3D
+  - **Fun Cinemas Indore** (C21 Mall, Ring Road) — 2D, 3D
+- **Pan-India Theaters**: Mumbai (Phoenix Palladium, Inorbit Malad, VIP Andheri), Delhi (Select City Walk, Nehru Place), Hyderabad (AMB Cinemas), Bengaluru (VR Mall Whitefield, Garuda Mall), Chennai, Pune, Kolkata.
+- **Location Filter Bar**: Dynamic city selection toggle with instant theater grouping.
 
-### 2. 🍿 Movie Management & Browsing
-- **Cinema Hero Carousel** featuring trending releases with high-resolution backdrops, ratings, and trailer previews.
-- **Search & Filter System**:
-  - Real-time search across movie title, description, and director.
-  - Interactive genre filter pills (Action, Sci-Fi, Adventure, Animation, Drama, Crime, Biography).
-  - Sorting options (Top Rated ⭐, Latest Releases 📅, Alphabetical).
-- **Dedicated Movie Details Page**:
-  - Full synopsis, certification (`PG-13`, `R`, `UA`), runtime, and language.
-  - Top cast gallery with actor photos and character names.
-  - YouTube trailer embed / links.
-  - Multi-day showtime selector (Today, Tomorrow, Day After) with theater auditoriums and formats (`IMAX 3D`, `Dolby Atmos`, `4DX`).
+### 2. 🎭 11 Advanced Screen Formats with Distinct Badges
+- **2D, 3D, RealD 3D, IMAX 3D, IMAX Laser, Dolby Atmos, Dolby Cinema, 4DX, 4DX 3D, ScreenX, 4K HDR**
+- Vibrant glowing format tags and instant format filter chips.
+- Format-calibrated tiered pricing:
+  - **Budget** (Rows A-C)
+  - **Premium** (Rows D-F)
+  - **Recliner** (Rows G-H)
 
-### 3. 💺 Interactive Seat Selection & Booking Engine
-- **Visual Auditorium Grid**:
-  - Curved screen indicator ("All Eyes This Way").
-  - Tiered seating structure:
-    - **VIP Recliners** (Rows H, J)
-    - **Premium Lounge** (Rows D - G)
-    - **Standard Rows** (Rows A - C)
-  - Realistic auditorium layout with center aisle walkway.
-  - Clear three-state color visualization:
-    - 🔵 **Available** (clickable with smooth hover glow)
-    - 🟡 **Selected** (vibrant amber glow with live counter)
-    - 🔒 **Reserved / Occupied** (disabled with indicator)
-- **Real-Time Dynamic Pricing**:
-  - Instant subtotal calculation as seats are picked or unpicked.
-  - Automated convenience fee & tax calculation.
-- **Checkout & Reservation Workflow**:
-  - Multi-payment simulator (Credit/Debit Card, UPI / QR, Net Banking, IMovies Wallet).
-  - Atomic reservation in MongoDB: flags selected seats as `isBooked: true` and decrements available seat count.
-  - Digital Ticket generation with unique reference ID (e.g. `IMO-894123-K7P`) and scannable QR / barcode.
+### 3. 🍿 Movie Catalog (Bollywood, Tollywood, Hollywood)
+- **24 Blockbuster Movies** with official TMDB posters, high-res backdrops, ratings, synopsis, and cast lists.
+- **Now Showing & Coming Soon tabs** (Ramayana Part 1, War 2, Godzilla Minus One, Kalki Part 2, Avatar Fire and Ash) with embedded trailer teaser mode.
+- Search by movie title, genre, language, director, and rating.
 
-### 4. 🎟️ User Dashboard & Booking History
-- Comprehensive overview of all tickets booked by the logged-in user.
-- Filter tickets by status: **All**, **Active**, or **Cancelled**.
-- Digital Ticket modal with **Print / Save as PDF** support.
-- **Real-Time Booking Cancellation**:
-  - Allows users to cancel tickets before the show.
-  - Automatically frees up reserved seats in MongoDB back to `isBooked: false`, restoring auditorium capacity immediately.
+### 4. 💺 Interactive Seat Selection & Snacks
+- Visual auditorium layout with curved screen indicator and center aisle.
+- Real-time seat reservation tracking (Available, Selected, Reserved).
+- **Concessions Add-on**: Gourmet Popcorn, Nachos with Salsa, Chilled Fountain Soda, and Saver Combos.
+
+### 5. 💳 Razorpay Checkout Simulation (Test Mode)
+- **UPI**: GPay, PhonePe, Paytm, BHIM with 1-click Test VPA auto-fill.
+- **Card**: Auto-fill with official Razorpay test card (`4111 2222 3333 4444`).
+- **Net Banking & Wallets**: Top Indian banks and mobile wallets.
+- **Digital M-Ticket**: Issued with Razorpay Payment ID, booking reference, and QR code.
+
+### 6. 🔐 Authentication & Twilio Verify OTP
+- Email & Password Login / Register.
+- Phone number OTP verification via **Twilio Verify API** (`IMovies` service).
+- **One-Click Demo Login** (`demo@imovies.com`) and **Admin Login** (`admin@imovies.com`).
 
 ---
 
