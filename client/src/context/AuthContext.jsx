@@ -71,6 +71,9 @@ export const AuthProvider = ({ children }) => {
       return {
         success: true,
         otp: res.data.otp,
+        sender: res.data.sender,
+        twilioDispatched: res.data.twilioDispatched,
+        twilioErrorMsg: res.data.twilioErrorMsg,
         message: res.data.message,
         identifier: res.data.identifier,
         deliveryMethod: res.data.deliveryMethod,

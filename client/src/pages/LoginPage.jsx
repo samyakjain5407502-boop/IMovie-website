@@ -15,7 +15,8 @@ const LoginPage = () => {
   const [otpStep, setOtpStep] = useState('input'); // 'input' | 'verify'
   const [deliveryMethod, setDeliveryMethod] = useState(null); // 'email' | 'sms'
   const [incomingOtp, setIncomingOtp] = useState(null);
-  const [smsSender, setSmsSender] = useState('IMovie');
+  const [smsSender, setSmsSender] = useState('IMovies');
+  const [twilioDispatched, setTwilioDispatched] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
   const [error, setError] = useState(null);
@@ -84,10 +85,13 @@ const LoginPage = () => {
       if (res.sender) {
         setSmsSender(res.sender);
       }
+      setTwilioDispatched(!!res.twilioDispatched);
       setSuccessMsg(
         isEmail
-          ? `[IMovie] OTP sent to your Email (${identifier})`
-          : `[IMovie] OTP SMS dispatched to (${identifier})`
+          ? `[IMovies] OTP sent to your Email (${identifier})`
+          : res.twilioDispatched
+          ? `[IMovies] Real cellular SMS sent directly to your phone (${identifier})!`
+          : `[IMovies] Verification code prepared for (${identifier})`
       );
     } else {
       setError(res.message);
@@ -306,9 +310,15 @@ const LoginPage = () => {
                       <div className="card bg-dark border border-danger border-opacity-75 p-3 mb-3 shadow rounded-3">
                         <div className="d-flex align-items-center justify-content-between mb-2">
                           <span className="badge bg-danger text-white fw-bold d-inline-flex align-items-center gap-1 px-2 py-1">
-                            <i className="bi bi-chat-left-dots-fill"></i> SMS from {smsSender || 'IMovie'}
+                            <i className="bi bi-chat-left-dots-fill"></i> SMS from {smsSender || 'IMovies'}
                           </span>
-                          <span className="badge bg-secondary-subtle text-light small">Just Now</span>
+                          {twilioDispatched ? (
+                            <span className="badge bg-success-subtle text-success small border border-success border-opacity-50">
+                              <i className="bi bi-broadcast me-1"></i> Sent to Phone
+                            </span>
+                          ) : (
+                            <span className="badge bg-secondary-subtle text-light small">Instant Gateway</span>
+                          )}
                         </div>
                         <div className="bg-black bg-opacity-50 p-2 rounded border border-secondary border-opacity-25 mb-2">
                           <code className="text-warning small d-block">
