@@ -38,9 +38,11 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const res = await API.post('/auth/login', { email, password });
-      const userData = res.data.data;
+      const rawUser = res.data.data || res.data.user || res.data;
+      const authToken = res.data.token || rawUser?.token;
+      const userData = { ...rawUser, token: authToken };
       setUser(userData);
-      setToken(userData.token);
+      setToken(authToken);
       localStorage.setItem('imovies_user', JSON.stringify(userData));
       return { success: true, user: userData };
     } catch (error) {
@@ -53,11 +55,13 @@ export const AuthProvider = ({ children }) => {
   const register = async (name, email, password) => {
     try {
       const res = await API.post('/auth/register', { name, email, password });
-      const userData = res.data.data;
+      const rawUser = res.data.data || res.data.user || res.data;
+      const authToken = res.data.token || rawUser?.token;
+      const userData = { ...rawUser, token: authToken };
       setUser(userData);
-      setToken(userData.token);
+      setToken(authToken);
       localStorage.setItem('imovies_user', JSON.stringify(userData));
-      return { success: true };
+      return { success: true, user: userData };
     } catch (error) {
       const message =
         error.response?.data?.message || 'Registration failed. Please try again.';

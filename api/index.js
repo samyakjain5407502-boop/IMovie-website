@@ -168,10 +168,31 @@ export default async function handler(req, res) {
 
   // 3. Showtimes Routes
   if (path === '/showtimes/admin/all') {
+    // Return lightweight showtimes without massive seat arrays, populated with movie title
+    const movieMap = new Map(catalog.movies.map((m) => [m._id, m]));
+    const lightweightShowtimes = catalog.showtimes.slice(0, 150).map((s) => {
+      const movie = movieMap.get(s.movieId) || { title: 'Movie', language: 'Hindi' };
+      return {
+        _id: s._id,
+        movieId: { _id: s.movieId, title: movie.title, language: movie.language },
+        theaterName: s.cinemaName || s.theaterName,
+        cinemaName: s.cinemaName || s.theaterName,
+        location: s.location,
+        city: s.city,
+        screen: s.screen,
+        format: s.format,
+        date: s.date,
+        time: s.time,
+        availableSeatsCount: s.availableSeatsCount,
+        totalSeatsCount: s.totalSeatsCount,
+        totalSeats: s.totalSeatsCount || 96,
+        pricing: s.pricing,
+      };
+    });
     return sendJson(res, 200, {
       success: true,
       count: catalog.showtimes.length,
-      data: catalog.showtimes,
+      data: lightweightShowtimes,
     });
   }
 
@@ -220,22 +241,97 @@ export default async function handler(req, res) {
   // 4. Bookings Routes
   if (path === '/bookings/admin/stats') {
     const totalRevenue = bookingsStore.reduce((acc, b) => acc + (b.totalAmount || 0), 125000);
+    const sampleRecent = bookingsStore.length > 0 ? bookingsStore.slice(0, 5) : [
+      {
+        _id: 'bkg_sample_1',
+        bookingReference: 'IMV984210',
+        userId: { name: 'Rahul Sharma', email: 'rahul.s@gmail.com' },
+        movieId: { title: 'Stree 2' },
+        seats: ['F4', 'F5'],
+        totalAmount: 560,
+        status: 'CONFIRMED',
+      },
+      {
+        _id: 'bkg_sample_2',
+        bookingReference: 'IMV872194',
+        userId: { name: 'Priya Verma', email: 'priya.v@outlook.com' },
+        movieId: { title: 'Pushpa 2: The Rule' },
+        seats: ['G1', 'G2'],
+        totalAmount: 760,
+        status: 'CONFIRMED',
+      },
+      {
+        _id: 'bkg_sample_3',
+        bookingReference: 'IMV653891',
+        userId: { name: 'Amit Jain', email: 'amit.jain@gmail.com' },
+        movieId: { title: 'Kalki 2898 AD' },
+        seats: ['D6', 'D7', 'D8'],
+        totalAmount: 840,
+        status: 'CONFIRMED',
+      },
+    ];
+
     return sendJson(res, 200, {
       success: true,
       data: {
         totalBookings: bookingsStore.length + 184,
+        confirmedBookings: bookingsStore.length + 184,
         totalRevenue,
         totalUsers: 89,
         totalMovies: catalog.movies.length,
+        totalShowtimes: catalog.showtimes.length,
+        recentBookings: sampleRecent,
       },
     });
   }
 
   if (path === '/bookings/admin/all') {
+    const sampleBookings = bookingsStore.length > 0 ? bookingsStore : [
+      {
+        _id: 'bkg_sample_1',
+        bookingReference: 'IMV984210',
+        userId: { name: 'Rahul Sharma', email: 'rahul.s@gmail.com' },
+        movieId: { title: 'Stree 2' },
+        seats: ['F4', 'F5'],
+        totalAmount: 560,
+        paymentMethod: 'Razorpay UPI (GPay)',
+        status: 'CONFIRMED',
+      },
+      {
+        _id: 'bkg_sample_2',
+        bookingReference: 'IMV872194',
+        userId: { name: 'Priya Verma', email: 'priya.v@outlook.com' },
+        movieId: { title: 'Pushpa 2: The Rule' },
+        seats: ['G1', 'G2'],
+        totalAmount: 760,
+        paymentMethod: 'Razorpay Card (Visa)',
+        status: 'CONFIRMED',
+      },
+      {
+        _id: 'bkg_sample_3',
+        bookingReference: 'IMV653891',
+        userId: { name: 'Amit Jain', email: 'amit.jain@gmail.com' },
+        movieId: { title: 'Kalki 2898 AD' },
+        seats: ['D6', 'D7', 'D8'],
+        totalAmount: 840,
+        paymentMethod: 'Razorpay Net Banking (HDFC)',
+        status: 'CONFIRMED',
+      },
+      {
+        _id: 'bkg_sample_4',
+        bookingReference: 'IMV521903',
+        userId: { name: 'Neha Gupta', email: 'neha.g@gmail.com' },
+        movieId: { title: 'Deadpool & Wolverine' },
+        seats: ['C3', 'C4'],
+        totalAmount: 480,
+        paymentMethod: 'Razorpay UPI (PhonePe)',
+        status: 'CONFIRMED',
+      },
+    ];
     return sendJson(res, 200, {
       success: true,
-      count: bookingsStore.length,
-      data: bookingsStore,
+      count: sampleBookings.length,
+      data: sampleBookings,
     });
   }
 
@@ -296,31 +392,39 @@ export default async function handler(req, res) {
   if (path === '/auth/login' && req.method === 'POST') {
     const body = await parseBody(req);
     const isAdmin = body.email === 'admin@imovies.com';
+    const token = 'jwt_demo_token_' + Date.now();
+    const userObj = {
+      _id: isAdmin ? 'usr_admin_01' : 'usr_demo_01',
+      name: isAdmin ? 'Cinema Manager (Admin)' : 'Movie Fan',
+      email: body.email,
+      role: isAdmin ? 'admin' : 'user',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+      token,
+    };
     return sendJson(res, 200, {
       success: true,
-      token: 'jwt_demo_token_' + Date.now(),
-      user: {
-        _id: isAdmin ? 'usr_admin_01' : 'usr_demo_01',
-        name: isAdmin ? 'Cinema Manager (Admin)' : 'Movie Fan',
-        email: body.email,
-        role: isAdmin ? 'admin' : 'user',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
-      },
+      token,
+      user: userObj,
+      data: userObj,
     });
   }
 
   if (path === '/auth/register' && req.method === 'POST') {
     const body = await parseBody(req);
+    const token = 'jwt_demo_token_' + Date.now();
+    const userObj = {
+      _id: 'usr_' + Date.now(),
+      name: body.name || 'Movie Fan',
+      email: body.email,
+      role: 'user',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+      token,
+    };
     return sendJson(res, 201, {
       success: true,
-      token: 'jwt_demo_token_' + Date.now(),
-      user: {
-        _id: 'usr_' + Date.now(),
-        name: body.name || 'Movie Fan',
-        email: body.email,
-        role: 'user',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
-      },
+      token,
+      user: userObj,
+      data: userObj,
     });
   }
 

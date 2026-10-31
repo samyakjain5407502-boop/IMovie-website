@@ -46,26 +46,36 @@ const AdminPage = () => {
   useEffect(() => {
     if (isAdmin) {
       loadAdminData();
+    } else {
+      setLoading(false);
     }
   }, [isAdmin]);
 
   const loadAdminData = async () => {
     try {
       setLoading(true);
-      const [statsRes, moviesRes, showtimesRes, bookingsRes] = await Promise.all([
+      const [statsRes, moviesRes, showtimesRes, bookingsRes] = await Promise.allSettled([
         API.get('/bookings/admin/stats'),
         API.get('/movies'),
         API.get('/showtimes/admin/all'),
         API.get('/bookings/admin/all'),
       ]);
 
-      setStats(statsRes.data.data);
-      setMovies(moviesRes.data.data || []);
-      setShowtimes(showtimesRes.data.data || []);
-      setAllBookings(bookingsRes.data.data || []);
-
-      if (moviesRes.data.data?.length > 0) {
-        setShowtimeForm((prev) => ({ ...prev, movieId: moviesRes.data.data[0]._id }));
+      if (statsRes.status === 'fulfilled') {
+        setStats(statsRes.value.data.data);
+      }
+      if (moviesRes.status === 'fulfilled') {
+        const mList = moviesRes.value.data.data || [];
+        setMovies(mList);
+        if (mList.length > 0) {
+          setShowtimeForm((prev) => ({ ...prev, movieId: mList[0]._id }));
+        }
+      }
+      if (showtimesRes.status === 'fulfilled') {
+        setShowtimes(showtimesRes.value.data.data || []);
+      }
+      if (bookingsRes.status === 'fulfilled') {
+        setAllBookings(bookingsRes.value.data.data || []);
       }
     } catch (err) {
       console.error('Failed to load admin data:', err);
@@ -159,10 +169,17 @@ const AdminPage = () => {
             You need Cinema Manager privileges to access analytics, movie listings, and showtime schedules.
           </p>
           <button
-            onClick={quickAdminLogin}
-            className="btn btn-warning w-100 py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow"
+            onClick={async () => {
+              setActionLoading(true);
+              const res = await quickAdminLogin();
+              setActionLoading(false);
+              if (!res.success) alert(res.message || 'Login failed');
+            }}
+            disabled={actionLoading}
+            className="btn btn-warning w-100 py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow text-dark"
           >
-            <i className="bi bi-lightning-charge-fill"></i> 1-Click Login as Cinema Admin
+            <i className="bi bi-lightning-charge-fill"></i>
+            {actionLoading ? 'Logging In as Admin...' : '1-Click Login as Cinema Admin'}
           </button>
           <div className="mt-3">
             <Link to="/" className="text-secondary small text-decoration-none">
@@ -170,6 +187,15 @@ const AdminPage = () => {
             </Link>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="d-flex flex-column justify-content-center align-items-center py-5 my-5">
+        <div className="spinner-border text-danger mb-3" style={{ width: '3rem', height: '3rem' }}></div>
+        <p className="text-secondary small">Loading Cinema Analytics & Schedules...</p>
       </div>
     );
   }
@@ -406,11 +432,11 @@ const AdminPage = () => {
                 {showtimes.map((st) => (
                   <tr key={st._id}>
                     <td>
-                      <strong className="text-white">{st.movieId?.title}</strong>
-                      <span className="badge bg-dark text-secondary ms-2">{st.movieId?.language}</span>
+                      <strong className="text-white">{st.movieId?.title || 'Movie'}</strong>
+                      <span className="badge bg-dark text-secondary ms-2">{st.movieId?.language || 'Hindi'}</span>
                     </td>
                     <td>
-                      <div className="text-light small">{st.theaterName}</div>
+                      <div className="text-light small">{st.theaterName || st.cinemaName}</div>
                       <div className="text-secondary" style={{ fontSize: '0.75rem' }}>{st.screen}</div>
                     </td>
                     <td>
@@ -420,11 +446,11 @@ const AdminPage = () => {
                     <td><span className="badge bg-danger-subtle text-danger">{st.format}</span></td>
                     <td>
                       <span className="badge bg-success-subtle text-success">
-                        {st.availableSeatsCount} / {st.totalSeats}
+                        {st.availableSeatsCount} / {st.totalSeats || st.totalSeatsCount || 96}
                       </span>
                     </td>
                     <td className="small text-secondary">
-                      ₹{st.pricing?.standard} / ₹{st.pricing?.premium} / ₹{st.pricing?.vip}
+                      ₹{st.pricing?.standard || 140} / ₹{st.pricing?.premium || 240} / ₹{st.pricing?.recliner || st.pricing?.vip || 380}
                     </td>
                     <td>
                       <button
