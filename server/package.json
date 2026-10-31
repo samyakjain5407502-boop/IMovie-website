@@ -1,6 +1,7 @@
 {
   "name": "imovies-server",
   "version": "1.0.0",
+  "type": "commonjs",
   "description": "Backend API for IMovies - Movie ticket booking made simple",
   "main": "server.js",
   "scripts": {
