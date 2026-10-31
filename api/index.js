@@ -249,10 +249,27 @@ export default async function handler(req, res) {
 
   if (path === '/bookings' && req.method === 'POST') {
     const body = await parseBody(req);
+    const st = catalog.showtimes.find((s) => s._id === body.showtimeId);
+    const mov = st ? catalog.movies.find((m) => m._id === st.movieId || m.id === st.movieId) : null;
+
     const booking = {
       _id: 'bkg_' + Date.now(),
       bookingNumber: 'IMV' + Math.floor(100000 + Math.random() * 900000),
+      bookingReference: 'IMV' + Math.floor(100000 + Math.random() * 900000),
       ...body,
+      showtimeId: st || {
+        _id: body.showtimeId || 'sht_default',
+        theaterName: 'IMovies Grand Multiplex',
+        screen: 'Audi 1',
+        format: 'IMAX 3D',
+        date: 'Today',
+        time: '07:30 PM',
+      },
+      movieId: mov || {
+        _id: 'mov_default',
+        title: 'IMovies Premiere',
+        language: 'Hindi',
+      },
       status: 'CONFIRMED',
       paymentStatus: 'PAID',
       createdAt: new Date().toISOString(),
@@ -260,7 +277,7 @@ export default async function handler(req, res) {
     bookingsStore.unshift(booking);
     return sendJson(res, 201, {
       success: true,
-      message: 'Tickets booked successfully!',
+      message: 'Tickets booked successfully via Razorpay!',
       data: booking,
     });
   }

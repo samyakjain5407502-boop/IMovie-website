@@ -24,10 +24,19 @@ const SeatBookingPage = () => {
 
   // Booking / Modal states
   const [showModal, setShowModal] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('UPI / Google Pay');
+  const [paymentMethod, setPaymentMethod] = useState('upi');
+  const [paymentStep, setPaymentStep] = useState('select'); // 'select' | 'processing' | 'success' | 'failed'
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(null);
   const [bookingError, setBookingError] = useState(null);
+
+  // Card form state
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCVV, setCardCVV] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [upiId, setUpiId] = useState('');
+  const [selectedBank, setSelectedBank] = useState('');
 
   useEffect(() => {
     fetchShowtime();
@@ -92,28 +101,42 @@ const SeatBookingPage = () => {
       navigate('/login', { state: { from: `/booking/${showtimeId}` } });
       return;
     }
+    setPaymentStep('select');
+    setBookingSuccess(null);
+    setBookingError(null);
     setShowModal(true);
   };
 
   const handleConfirmBooking = async () => {
     try {
+      setPaymentStep('processing');
       setBookingLoading(true);
       setBookingError(null);
 
+      // Simulate Razorpay payment processing delay (2.5s)
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+
       const seatNumbers = selectedSeats.map((s) => s.seatNumber);
+
+      const razorpayPaymentId = 'pay_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 5);
+      const razorpayOrderId = 'order_' + Math.random().toString(36).substring(2, 15);
 
       const res = await API.post('/bookings', {
         showtimeId: showtime._id,
         seats: seatNumbers,
-        paymentMethod,
+        paymentMethod: paymentMethod === 'upi' ? 'Razorpay UPI' : paymentMethod === 'card' ? 'Razorpay Card' : paymentMethod === 'netbanking' ? 'Razorpay Net Banking' : 'Razorpay Wallet',
         snacksTotal,
+        razorpayPaymentId,
+        razorpayOrderId,
       });
 
-      setBookingSuccess(res.data.data);
+      setBookingSuccess({ ...res.data.data, razorpayPaymentId, razorpayOrderId });
+      setPaymentStep('success');
     } catch (err) {
       console.error('Booking submission failed:', err);
-      const msg = err.response?.data?.message || 'Booking failed. Seats may have been taken.';
+      const msg = err.response?.data?.message || 'Payment failed. Please try again.';
       setBookingError(msg);
+      setPaymentStep('failed');
       fetchShowtime();
     } finally {
       setBookingLoading(false);
@@ -507,163 +530,451 @@ const SeatBookingPage = () => {
         </div>
       </section>
 
-      {/* Confirmation & Payment Modal */}
+      {/* Razorpay Checkout Experience Modal */}
       {showModal && (
         <div
           className="modal fade show d-block"
-          style={{ backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
+          style={{ backgroundColor: 'rgba(5, 10, 20, 0.92)', backdropFilter: 'blur(10px)' }}
           tabIndex="-1"
         >
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content glass-card border-secondary text-light">
-              <div className="modal-header border-secondary border-opacity-25">
-                <h5 className="modal-title fw-bold text-white d-flex align-items-center gap-2">
-                  {bookingSuccess ? (
-                    <>
-                      <i className="bi bi-check-circle-fill text-success fs-4"></i> Booking Confirmed!
-                    </>
-                  ) : (
-                    <>
-                      <i className="bi bi-credit-card-fill text-danger"></i> Complete Reservation
-                    </>
-                  )}
-                </h5>
-                <button
-                  type="button"
-                  className="btn-close btn-close-white"
-                  onClick={() => {
-                    setShowModal(false);
-                    if (bookingSuccess) {
-                      navigate('/dashboard');
-                    }
-                  }}
-                ></button>
+          <div className="modal-dialog modal-dialog-centered modal-lg">
+            <div className="modal-content overflow-hidden border-0 shadow-24" style={{ borderRadius: '16px', background: '#0d1527', color: '#f8fafc' }}>
+              
+              {/* Razorpay Brand Header */}
+              <div
+                className="p-3 px-4 d-flex justify-content-between align-items-center"
+                style={{
+                  background: 'linear-gradient(135deg, #0c2340 0%, #07192f 100%)',
+                  borderBottom: '1px solid rgba(255,255,255,0.08)',
+                }}
+              >
+                <div className="d-flex align-items-center gap-3">
+                  <div
+                    className="d-flex align-items-center justify-content-center rounded-3 shadow-sm"
+                    style={{ width: '42px', height: '42px', background: '#0c87f2' }}
+                  >
+                    <i className="bi bi-lightning-charge-fill text-white fs-5"></i>
+                  </div>
+                  <div>
+                    <div className="d-flex align-items-center gap-2">
+                      <span className="fw-black text-white" style={{ letterSpacing: '0.5px', fontSize: '1.15rem' }}>
+                        Razorpay
+                      </span>
+                      <span className="badge bg-warning text-dark fw-bold px-2 py-0" style={{ fontSize: '0.65rem' }}>
+                        TEST MODE
+                      </span>
+                    </div>
+                    <div className="text-secondary small d-flex align-items-center gap-2" style={{ fontSize: '0.8rem' }}>
+                      <span className="text-light fw-medium">IMovies Entertainment</span>
+                      <span>•</span>
+                      <span>{showtime?.movieId?.title || 'Movie Booking'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="d-flex align-items-center gap-3">
+                  <div className="text-end">
+                    <span className="text-secondary small d-block" style={{ fontSize: '0.72rem' }}>Total Amount</span>
+                    <strong className="text-white fs-5" style={{ color: '#38bdf8' }}>₹{totalAmount.toFixed(2)}</strong>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-close btn-close-white ms-2"
+                    disabled={paymentStep === 'processing'}
+                    onClick={() => {
+                      setShowModal(false);
+                      if (bookingSuccess) navigate('/dashboard');
+                    }}
+                  ></button>
+                </div>
               </div>
 
-              <div className="modal-body p-4">
-                {bookingSuccess ? (
-                  /* Digital Ticket Preview */
-                  <div className="ticket-stub shadow-lg">
-                    <div className="ticket-header">
-                      <div className="d-flex justify-content-between align-items-start">
+              {/* Modal Body: Processing vs Success vs Payment Form */}
+              <div className="modal-body p-0">
+                {paymentStep === 'processing' ? (
+                  /* Animated Razorpay Processing Screen */
+                  <div className="text-center py-5 px-4 my-4">
+                    <div className="position-relative d-inline-block mb-4">
+                      <div
+                        className="spinner-border"
+                        style={{ width: '4.5rem', height: '4.5rem', borderWidth: '4px', color: '#0c87f2' }}
+                      ></div>
+                      <i
+                        className="bi bi-shield-lock-fill position-absolute top-50 start-50 translate-middle fs-4"
+                        style={{ color: '#38bdf8' }}
+                      ></i>
+                    </div>
+                    <h4 className="text-white fw-bold mb-2">Authorizing with Razorpay...</h4>
+                    <p className="text-secondary small mb-3" style={{ maxWidth: '420px', margin: '0 auto' }}>
+                      Simulating bank authorization in test mode. Please do not close or refresh this tab.
+                    </p>
+                    <div className="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-dark border border-secondary border-opacity-25 small text-secondary">
+                      <span className="spinner-grow spinner-grow-sm text-info"></span>
+                      <span>256-bit Encrypted Session Active</span>
+                    </div>
+                  </div>
+                ) : paymentStep === 'success' && bookingSuccess ? (
+                  /* Booking Confirmed / Ticket Screen */
+                  <div className="p-4">
+                    {/* Razorpay Success Banner */}
+                    <div
+                      className="p-3 mb-4 rounded-3 d-flex flex-wrap justify-content-between align-items-center gap-2"
+                      style={{ background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.35)' }}
+                    >
+                      <div className="d-flex align-items-center gap-2">
+                        <i className="bi bi-check-circle-fill text-success fs-3"></i>
                         <div>
-                          <span className="badge bg-success mb-1">CONFIRMED</span>
-                          <h4 className="fw-bold text-white mb-0">{bookingSuccess.movieId?.title}</h4>
-                          <span className="text-secondary small">{bookingSuccess.showtimeId?.theaterName}</span>
-                        </div>
-                        <div className="text-end">
-                          <span className="text-secondary small d-block">Booking Ref</span>
-                          <strong className="text-warning">{bookingSuccess.bookingReference}</strong>
+                          <div className="fw-bold text-success">Payment Received via Razorpay</div>
+                          <div className="text-secondary small font-monospace">
+                            Payment ID: <span className="text-white">{bookingSuccess.razorpayPaymentId || 'pay_sample123'}</span>
+                          </div>
                         </div>
                       </div>
+                      <span className="badge bg-success px-3 py-2 text-uppercase fw-bold">Verified & Paid</span>
                     </div>
 
-                    <div className="p-3 bg-dark">
-                      <div className="row g-2 small mb-3">
-                        <div className="col-6">
-                          <span className="text-secondary d-block">Date & Time</span>
-                          <strong className="text-light">
-                            {bookingSuccess.showtimeId?.date} • {bookingSuccess.showtimeId?.time}
-                          </strong>
-                        </div>
-                        <div className="col-6">
-                          <span className="text-secondary d-block">Screen & Format</span>
-                          <strong className="text-light">
-                            {bookingSuccess.showtimeId?.screen} ({bookingSuccess.showtimeId?.format})
-                          </strong>
-                        </div>
-                        <div className="col-6">
-                          <span className="text-secondary d-block">Reserved Seats</span>
-                          <strong className="text-warning fs-6">{bookingSuccess.seats?.join(', ')}</strong>
-                        </div>
-                        <div className="col-6">
-                          <span className="text-secondary d-block">Total Paid</span>
-                          <strong className="text-success fs-6">₹{bookingSuccess.totalAmount?.toFixed(2)}</strong>
+                    {/* Official Digital Ticket Stub */}
+                    <div className="ticket-stub shadow-lg rounded-3 overflow-hidden border border-secondary border-opacity-50">
+                      <div className="ticket-header p-3" style={{ background: '#1e293b' }}>
+                        <div className="d-flex justify-content-between align-items-start">
+                          <div>
+                            <span className="badge bg-danger mb-1 fw-bold">IMOVIES ADMISSION PASS</span>
+                            <h4 className="fw-bold text-white mb-0">{bookingSuccess.movieId?.title}</h4>
+                            <span className="text-secondary small">{bookingSuccess.showtimeId?.theaterName}</span>
+                          </div>
+                          <div className="text-end">
+                            <span className="text-secondary small d-block">Booking Reference</span>
+                            <strong className="text-warning fs-6">{bookingSuccess.bookingReference}</strong>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="p-3 bg-black rounded-3 text-center border border-secondary border-opacity-25">
-                        <i className="bi bi-qr-code fs-1 text-light d-block mb-1"></i>
-                        <span className="ticket-barcode">{bookingSuccess.bookingReference}</span>
-                        <div className="text-secondary small mt-1" style={{ fontSize: '0.7rem' }}>
-                          Scan at cinema entrance turnstile or box office kiosk
+                      <div className="p-3 bg-dark">
+                        <div className="row g-3 small mb-3">
+                          <div className="col-sm-6">
+                            <span className="text-secondary d-block">Date & Showtime</span>
+                            <strong className="text-light">
+                              {bookingSuccess.showtimeId?.date} • {bookingSuccess.showtimeId?.time}
+                            </strong>
+                          </div>
+                          <div className="col-sm-6">
+                            <span className="text-secondary d-block">Screen & Format</span>
+                            <strong className="text-light">
+                              {bookingSuccess.showtimeId?.screen} ({bookingSuccess.showtimeId?.format})
+                            </strong>
+                          </div>
+                          <div className="col-sm-6">
+                            <span className="text-secondary d-block">Reserved Seats</span>
+                            <strong className="text-warning fs-6">{bookingSuccess.seats?.join(', ')}</strong>
+                          </div>
+                          <div className="col-sm-6">
+                            <span className="text-secondary d-block">Total Paid (Incl. Taxes & Snacks)</span>
+                            <strong className="text-success fs-6">₹{bookingSuccess.totalAmount?.toFixed(2)}</strong>
+                          </div>
+                        </div>
+
+                        <div className="p-3 bg-black rounded-3 text-center border border-secondary border-opacity-25">
+                          <i className="bi bi-qr-code fs-1 text-light d-block mb-1"></i>
+                          <span className="ticket-barcode text-secondary small font-monospace">{bookingSuccess.bookingReference}</span>
+                          <div className="text-secondary small mt-1" style={{ fontSize: '0.72rem' }}>
+                            Scan at cinema turnstiles or box office kiosk for instant entry
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  /* Indian Payment Options */
+                  /* Razorpay Multi-Method Payment Selector */
                   <div>
                     {bookingError && (
-                      <div className="alert alert-danger py-2 small mb-3">
+                      <div className="alert alert-danger m-3 mb-0 py-2 small">
                         <i className="bi bi-exclamation-triangle-fill me-1"></i> {bookingError}
                       </div>
                     )}
 
-                    <div className="p-3 bg-dark rounded-3 mb-3 border border-secondary border-opacity-25">
-                      <div className="d-flex justify-content-between mb-1">
-                        <span className="text-secondary small">Movie:</span>
-                        <strong className="text-white small">{showtime.movieId?.title}</strong>
-                      </div>
-                      <div className="d-flex justify-content-between mb-1">
-                        <span className="text-secondary small">Showtime:</span>
-                        <strong className="text-white small">{showtime.date} at {showtime.time}</strong>
-                      </div>
-                      <div className="d-flex justify-content-between mb-1">
-                        <span className="text-secondary small">Seats:</span>
-                        <strong className="text-warning small">{selectedSeats.map((s) => s.seatNumber).join(', ')}</strong>
-                      </div>
-                      <div className="d-flex justify-content-between pt-2 border-top border-secondary border-opacity-25">
-                        <span className="fw-bold text-light">Total to Pay:</span>
-                        <strong className="text-success fs-5">₹{totalAmount.toFixed(2)}</strong>
-                      </div>
-                    </div>
+                    <div className="row g-0">
+                      {/* Left: Razorpay Payment Method Menu */}
+                      <div
+                        className="col-md-4 p-3 border-end border-secondary border-opacity-25"
+                        style={{ background: 'rgba(0,0,0,0.25)' }}
+                      >
+                        <span className="text-secondary text-uppercase fw-bold d-block mb-2 px-2" style={{ fontSize: '0.7rem', letterSpacing: '0.5px' }}>
+                          Payment Options
+                        </span>
 
-                    <h6 className="text-white fw-bold mb-2 small text-uppercase">Select Payment Method</h6>
-                    <div className="d-flex flex-column gap-2 mb-4">
-                      {['UPI / Google Pay / PhonePe', 'Credit / Debit Card (Visa, RuPay, MC)', 'Net Banking (SBI, HDFC, ICICI)', 'IMovies Cinema Wallet'].map((m) => (
-                        <label
-                          key={m}
-                          className={`d-flex align-items-center justify-content-between p-3 rounded-3 border cursor-pointer transition-all ${
-                            paymentMethod === m
-                              ? 'border-danger bg-danger bg-opacity-10 text-white'
-                              : 'border-secondary border-opacity-25 bg-dark text-secondary'
-                          }`}
-                          style={{ cursor: 'pointer' }}
-                        >
-                          <div className="d-flex align-items-center gap-3">
-                            <input
-                              type="radio"
-                              name="paymentMethod"
-                              checked={paymentMethod === m}
-                              onChange={() => setPaymentMethod(m)}
-                              className="form-check-input mt-0"
-                            />
-                            <span className="fw-semibold text-light">{m}</span>
+                        <div className="d-flex flex-column gap-1">
+                          <button
+                            type="button"
+                            className={`btn text-start p-2 px-3 rounded-3 d-flex align-items-center justify-content-between transition-all ${
+                              paymentMethod === 'upi' ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-dark'
+                            }`}
+                            onClick={() => setPaymentMethod('upi')}
+                          >
+                            <div className="d-flex align-items-center gap-2">
+                              <i className="bi bi-qr-code-scan fs-5"></i>
+                              <div>
+                                <div className="fw-semibold small">UPI / QR Code</div>
+                                <div className="text-white-50" style={{ fontSize: '0.7rem' }}>GPay, PhonePe, Paytm</div>
+                              </div>
+                            </div>
+                            <i className="bi bi-chevron-right small opacity-50"></i>
+                          </button>
+
+                          <button
+                            type="button"
+                            className={`btn text-start p-2 px-3 rounded-3 d-flex align-items-center justify-content-between transition-all ${
+                              paymentMethod === 'card' ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-dark'
+                            }`}
+                            onClick={() => setPaymentMethod('card')}
+                          >
+                            <div className="d-flex align-items-center gap-2">
+                              <i className="bi bi-credit-card-2-front fs-5"></i>
+                              <div>
+                                <div className="fw-semibold small">Cards</div>
+                                <div className="text-white-50" style={{ fontSize: '0.7rem' }}>Visa, MasterCard, RuPay</div>
+                              </div>
+                            </div>
+                            <i className="bi bi-chevron-right small opacity-50"></i>
+                          </button>
+
+                          <button
+                            type="button"
+                            className={`btn text-start p-2 px-3 rounded-3 d-flex align-items-center justify-content-between transition-all ${
+                              paymentMethod === 'netbanking' ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-dark'
+                            }`}
+                            onClick={() => setPaymentMethod('netbanking')}
+                          >
+                            <div className="d-flex align-items-center gap-2">
+                              <i className="bi bi-bank fs-5"></i>
+                              <div>
+                                <div className="fw-semibold small">Net Banking</div>
+                                <div className="text-white-50" style={{ fontSize: '0.7rem' }}>All Indian Banks</div>
+                              </div>
+                            </div>
+                            <i className="bi bi-chevron-right small opacity-50"></i>
+                          </button>
+
+                          <button
+                            type="button"
+                            className={`btn text-start p-2 px-3 rounded-3 d-flex align-items-center justify-content-between transition-all ${
+                              paymentMethod === 'wallet' ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-dark'
+                            }`}
+                            onClick={() => setPaymentMethod('wallet')}
+                          >
+                            <div className="d-flex align-items-center gap-2">
+                              <i className="bi bi-wallet2 fs-5"></i>
+                              <div>
+                                <div className="fw-semibold small">Wallets</div>
+                                <div className="text-white-50" style={{ fontSize: '0.7rem' }}>Paytm, PhonePe, Amazon</div>
+                              </div>
+                            </div>
+                            <i className="bi bi-chevron-right small opacity-50"></i>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Right: Method Input Screen */}
+                      <div className="col-md-8 p-4">
+                        {paymentMethod === 'upi' && (
+                          <div>
+                            <h6 className="fw-bold text-white mb-1 d-flex align-items-center gap-2">
+                              <i className="bi bi-phone text-primary"></i> Pay using UPI
+                            </h6>
+                            <p className="text-secondary small mb-3">
+                              Pay instantly with any UPI app on your phone.
+                            </p>
+
+                            <div className="row g-2 mb-3">
+                              {['Google Pay', 'PhonePe', 'Paytm', 'BHIM UPI'].map((app) => (
+                                <div className="col-6" key={app}>
+                                  <div
+                                    className="p-2 px-3 rounded-3 border border-secondary border-opacity-25 bg-dark d-flex align-items-center gap-2 cursor-pointer"
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() => setUpiId(`user@${app.toLowerCase().replace(/\s+/g, '')}`)}
+                                  >
+                                    <i className="bi bi-app-indicator text-warning"></i>
+                                    <span className="small text-light fw-medium">{app}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            <label className="form-label text-secondary small fw-semibold">Or Enter UPI ID / VPA</label>
+                            <div className="input-group mb-2">
+                              <input
+                                type="text"
+                                className="form-control bg-dark border-secondary text-white"
+                                placeholder="e.g. 7649848584@upi or username@okhdfcbank"
+                                value={upiId}
+                                onChange={(e) => setUpiId(e.target.value)}
+                              />
+                              <button
+                                type="button"
+                                className="btn btn-outline-primary btn-sm"
+                                onClick={() => setUpiId('samyakjain@okhdfcbank')}
+                              >
+                                Auto-Fill Test VPA
+                              </button>
+                            </div>
+                            <span className="text-secondary" style={{ fontSize: '0.72rem' }}>
+                              A collect request will be sent to your UPI app.
+                            </span>
                           </div>
-                          <i className="bi bi-shield-check text-success"></i>
-                        </label>
-                      ))}
-                    </div>
+                        )}
 
-                    <div className="text-secondary small mb-3 text-center">
-                      <i className="bi bi-shield-lock me-1"></i> 256-bit SSL encrypted safe checkout simulation.
+                        {paymentMethod === 'card' && (
+                          <div>
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                              <h6 className="fw-bold text-white mb-0">Card Details</h6>
+                              <button
+                                type="button"
+                                className="btn btn-link btn-sm text-info p-0 text-decoration-none"
+                                onClick={() => {
+                                  setCardNumber('4111 2222 3333 4444');
+                                  setCardExpiry('12/28');
+                                  setCardCVV('888');
+                                  setCardName(user?.name || 'Samyak Jain');
+                                }}
+                              >
+                                <i className="bi bi-lightning-charge me-1"></i> Fill Razorpay Test Card
+                              </button>
+                            </div>
+
+                            <div className="mb-3">
+                              <label className="form-label text-secondary small">Card Number</label>
+                              <div className="input-group">
+                                <span className="input-group-text bg-dark border-secondary text-secondary">
+                                  <i className="bi bi-credit-card"></i>
+                                </span>
+                                <input
+                                  type="text"
+                                  className="form-control bg-dark border-secondary text-white font-monospace"
+                                  placeholder="4111 2222 3333 4444"
+                                  maxLength="19"
+                                  value={cardNumber}
+                                  onChange={(e) => setCardNumber(e.target.value)}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="row g-2 mb-3">
+                              <div className="col-6">
+                                <label className="form-label text-secondary small">Expiry (MM/YY)</label>
+                                <input
+                                  type="text"
+                                  className="form-control bg-dark border-secondary text-white font-monospace"
+                                  placeholder="12/28"
+                                  maxLength="5"
+                                  value={cardExpiry}
+                                  onChange={(e) => setCardExpiry(e.target.value)}
+                                />
+                              </div>
+                              <div className="col-6">
+                                <label className="form-label text-secondary small">CVV</label>
+                                <input
+                                  type="password"
+                                  className="form-control bg-dark border-secondary text-white font-monospace"
+                                  placeholder="•••"
+                                  maxLength="4"
+                                  value={cardCVV}
+                                  onChange={(e) => setCardCVV(e.target.value)}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="mb-2">
+                              <label className="form-label text-secondary small">Cardholder Name</label>
+                              <input
+                                type="text"
+                                className="form-control bg-dark border-secondary text-white"
+                                placeholder="Name as on card"
+                                value={cardName}
+                                onChange={(e) => setCardName(e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {paymentMethod === 'netbanking' && (
+                          <div>
+                            <h6 className="fw-bold text-white mb-2">Select Your Bank</h6>
+                            <div className="row g-2 mb-3">
+                              {['State Bank of India', 'HDFC Bank', 'ICICI Bank', 'Axis Bank', 'Kotak Mahindra', 'Punjab National Bank'].map((b) => (
+                                <div className="col-6" key={b}>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedBank(b)}
+                                    className={`btn btn-sm w-100 p-2 text-start rounded-3 border transition-all ${
+                                      selectedBank === b ? 'btn-primary border-primary' : 'btn-dark border-secondary border-opacity-25 text-light'
+                                    }`}
+                                  >
+                                    <i className="bi bi-building me-1 text-warning"></i> {b}
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                            <span className="text-secondary small">
+                              You will be redirected to bank's secure net banking authorization portal.
+                            </span>
+                          </div>
+                        )}
+
+                        {paymentMethod === 'wallet' && (
+                          <div>
+                            <h6 className="fw-bold text-white mb-2">Select Digital Wallet</h6>
+                            <div className="d-flex flex-column gap-2 mb-3">
+                              {['Paytm Wallet', 'PhonePe Wallet', 'Amazon Pay Balance', 'MobiKwik'].map((w) => (
+                                <label
+                                  key={w}
+                                  className="d-flex align-items-center justify-content-between p-2 px-3 rounded-3 border border-secondary border-opacity-25 bg-dark cursor-pointer"
+                                  style={{ cursor: 'pointer' }}
+                                >
+                                  <div className="d-flex align-items-center gap-2">
+                                    <input type="radio" name="walletChoice" defaultChecked={w.includes('Paytm')} className="form-check-input" />
+                                    <span className="small text-light">{w}</span>
+                                  </div>
+                                  <i className="bi bi-shield-check text-success"></i>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Order Summary Line */}
+                        <div className="p-3 mt-3 rounded-3 bg-dark border border-secondary border-opacity-25 small">
+                          <div className="d-flex justify-content-between mb-1">
+                            <span className="text-secondary">Selected Seats:</span>
+                            <span className="text-warning fw-bold">{selectedSeats.map((s) => s.seatNumber).join(', ')}</span>
+                          </div>
+                          <div className="d-flex justify-content-between">
+                            <span className="text-secondary">Amount Payable:</span>
+                            <span className="text-success fw-bold fs-6">₹{totalAmount.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
               </div>
 
-              <div className="modal-footer border-secondary border-opacity-25">
-                {bookingSuccess ? (
+              {/* Razorpay Footer */}
+              <div
+                className="p-3 px-4 d-flex flex-wrap justify-content-between align-items-center gap-2"
+                style={{
+                  background: 'rgba(0,0,0,0.4)',
+                  borderTop: '1px solid rgba(255,255,255,0.08)',
+                }}
+              >
+                {paymentStep === 'success' ? (
                   <div className="d-flex w-100 gap-2">
                     <button
-                      className="btn btn-outline-cinema flex-grow-1"
+                      className="btn btn-outline-light flex-grow-1"
                       onClick={() => window.print()}
                     >
                       <i className="bi bi-printer me-1"></i> Print Ticket
                     </button>
                     <button
-                      className="btn btn-cinema flex-grow-1"
+                      className="btn btn-primary flex-grow-1 fw-bold"
                       onClick={() => {
                         setShowModal(false);
                         navigate('/dashboard');
@@ -673,34 +984,35 @@ const SeatBookingPage = () => {
                     </button>
                   </div>
                 ) : (
-                  <div className="d-flex w-100 gap-2">
-                    <button
-                      type="button"
-                      className="btn btn-outline-cinema"
-                      onClick={() => setShowModal(false)}
-                      disabled={bookingLoading}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-cinema flex-grow-1 d-flex align-items-center justify-content-center gap-2"
-                      onClick={handleConfirmBooking}
-                      disabled={bookingLoading}
-                    >
-                      {bookingLoading ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm"></span> Processing...
-                        </>
-                      ) : (
-                        <>
-                          <i className="bi bi-check2-circle fs-5"></i> Confirm & Pay ₹{totalAmount.toFixed(2)}
-                        </>
-                      )}
-                    </button>
-                  </div>
+                  <>
+                    <div className="d-flex align-items-center gap-2 text-secondary small" style={{ fontSize: '0.75rem' }}>
+                      <i className="bi bi-shield-shaded text-success"></i>
+                      <span>Secured by <strong>Razorpay</strong> • 256-bit SSL</span>
+                    </div>
+
+                    <div className="d-flex gap-2 ms-auto">
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary btn-sm px-3"
+                        disabled={paymentStep === 'processing'}
+                        onClick={() => setShowModal(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm px-4 fw-bold shadow d-flex align-items-center gap-2"
+                        style={{ background: '#0c87f2', borderColor: '#0c87f2' }}
+                        disabled={paymentStep === 'processing'}
+                        onClick={handleConfirmBooking}
+                      >
+                        <i className="bi bi-lock-fill"></i> Pay ₹{totalAmount.toFixed(2)}
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
+
             </div>
           </div>
         </div>
