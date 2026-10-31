@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const MovieCard = ({ movie }) => {
+  const isComingSoon = movie.status === 'COMING_SOON';
+
   // Format duration in minutes into hours and minutes
   const formatDuration = (mins) => {
     if (!mins) return '';
@@ -11,8 +13,8 @@ const MovieCard = ({ movie }) => {
   };
 
   return (
-    <div className="movie-card">
-      <Link to={`/movie/${movie._id}`} className="movie-poster-wrap d-block text-decoration-none">
+    <div className="movie-card position-relative">
+      <Link to={`/movie/${movie._id}`} className="movie-poster-wrap d-block text-decoration-none position-relative">
         <img
           src={movie.posterUrl}
           alt={movie.title}
@@ -23,6 +25,11 @@ const MovieCard = ({ movie }) => {
             e.target.src = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80';
           }}
         />
+        {isComingSoon ? (
+          <div className="position-absolute top-0 start-0 m-2 badge bg-warning text-dark fw-bold shadow-sm d-flex align-items-center gap-1">
+            <i className="bi bi-rocket-takeoff-fill"></i> Coming Soon
+          </div>
+        ) : null}
         <div className="movie-rating-badge">
           <i className="bi bi-star-fill me-1 text-warning"></i>
           {movie.rating ? movie.rating.toFixed(1) : '8.5'}
@@ -54,12 +61,20 @@ const MovieCard = ({ movie }) => {
         </div>
 
         <div className="mt-3 pt-2 border-top border-secondary border-opacity-25 d-flex align-items-center justify-content-between gap-2">
-          <Link to={`/movie/${movie._id}`} className="btn btn-outline-cinema btn-sm flex-grow-1">
-            Details
-          </Link>
-          <Link to={`/movie/${movie._id}`} className="btn btn-cinema btn-sm flex-grow-1 d-flex align-items-center justify-content-center gap-1">
-            <i className="bi bi-ticket-perforated"></i> Book Now
-          </Link>
+          {isComingSoon ? (
+            <Link to={`/movie/${movie._id}`} className="btn btn-warning btn-sm flex-grow-1 fw-bold d-flex align-items-center justify-content-center gap-1 text-dark shadow-sm">
+              <i className="bi bi-play-btn-fill"></i> View Details & Teaser
+            </Link>
+          ) : (
+            <>
+              <Link to={`/movie/${movie._id}`} className="btn btn-outline-cinema btn-sm flex-grow-1">
+                Details
+              </Link>
+              <Link to={`/movie/${movie._id}`} className="btn btn-cinema btn-sm flex-grow-1 d-flex align-items-center justify-content-center gap-1">
+                <i className="bi bi-ticket-perforated"></i> Book Now
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </div>

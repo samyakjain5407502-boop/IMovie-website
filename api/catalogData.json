@@ -662,6 +662,190 @@
         }
       ],
       "_id": "6ae010000000000000000012"
+    },
+    {
+      "title": "Ramayana: Part 1",
+      "description": "An epic cinematic adaptation of the timeless Indian epic Ramayana, helmed by Nitesh Tiwari with cutting-edge visual effects. Follows Prince Rama's divine journey, devotion, and monumental righteous battle against the demon king Ravana.",
+      "posterUrl": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=600&q=80",
+      "backdropUrl": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80",
+      "trailerUrl": "https://www.youtube.com/watch?v=kY3hN89x8yU",
+      "genre": [
+        "Mythology",
+        "Epic",
+        "Action",
+        "Drama"
+      ],
+      "duration": 178,
+      "rating": 9.5,
+      "votesCount": 180000,
+      "certification": "U",
+      "language": "Hindi",
+      "director": "Nitesh Tiwari",
+      "featured": true,
+      "status": "COMING_SOON",
+      "releaseDate": "2026-11-01",
+      "cast": [
+        {
+          "name": "Ranbir Kapoor",
+          "role": "Lord Rama",
+          "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80"
+        },
+        {
+          "name": "Sai Pallavi",
+          "role": "Mata Sita",
+          "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80"
+        },
+        {
+          "name": "Yash",
+          "role": "Lankeshwar Ravana",
+          "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=100&q=80"
+        },
+        {
+          "name": "Sunny Deol",
+          "role": "Lord Hanuman",
+          "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80"
+        }
+      ],
+      "_id": "6ae010000000000000000050"
+    },
+    {
+      "title": "Godzilla Minus One",
+      "description": "In post-WWII Japan devastated by war, a colossal prehistoric sea behemoth Godzilla emerges from the ocean to wreak catastrophic destruction. Traumatized veterans must band together to defend their homeland.",
+      "posterUrl": "https://image.tmdb.org/t/p/original/hkxxMIGaiCTmrEArK7J56JTKUlB.jpg",
+      "backdropUrl": "https://image.tmdb.org/t/p/original/jXJxMcVoTTtxAoQIIR2n2cK5bhh.jpg",
+      "trailerUrl": "https://www.youtube.com/watch?v=VvSrHIX5a-0",
+      "genre": [
+        "Sci-Fi",
+        "Action",
+        "Thriller",
+        "Drama"
+      ],
+      "duration": 125,
+      "rating": 8.8,
+      "votesCount": 430000,
+      "certification": "UA",
+      "language": "English",
+      "director": "Takashi Yamazaki",
+      "featured": false,
+      "status": "COMING_SOON",
+      "releaseDate": "2026-11-15",
+      "cast": [
+        {
+          "name": "Ryunosuke Kamiki",
+          "role": "Koichi Shikishima",
+          "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=100&q=80"
+        },
+        {
+          "name": "Minami Hamabe",
+          "role": "Noriko Oishi",
+          "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80"
+        }
+      ],
+      "_id": "6ae010000000000000000051"
+    },
+    {
+      "title": "War 2",
+      "description": "Major Kabir Dhaliwal clashes with a lethal international operative in high-octane globe-trotting espionage warfare across Europe, Tokyo, and Ladakh in the YRF Spy Universe.",
+      "posterUrl": "https://image.tmdb.org/t/p/original/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg",
+      "backdropUrl": "https://image.tmdb.org/t/p/original/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg",
+      "trailerUrl": "https://www.youtube.com/watch?v=tQ0mzXRk-oU",
+      "genre": [
+        "Action",
+        "Thriller",
+        "Adventure"
+      ],
+      "duration": 160,
+      "rating": 8.7,
+      "votesCount": 250000,
+      "certification": "UA",
+      "language": "Hindi",
+      "director": "Ayan Mukerji",
+      "featured": false,
+      "status": "COMING_SOON",
+      "releaseDate": "2026-12-25",
+      "cast": [
+        {
+          "name": "Hrithik Roshan",
+          "role": "Major Kabir",
+          "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=100&q=80"
+        },
+        {
+          "name": "N. T. Rama Rao Jr.",
+          "role": "Agent Vikram",
+          "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80"
+        }
+      ],
+      "_id": "6ae010000000000000000052"
+    },
+    {
+      "title": "Kalki 2898 AD: Part 2",
+      "description": "The apocalyptic saga continues as Bhairava, Ashwatthama, and Supreme Yaskin collide in a cosmic clash over the unborn child SUM-80 in the dystopian future of Kasi.",
+      "posterUrl": "https://image.tmdb.org/t/p/original/87ivK4zWc5d5QcO3Xo0jZ9V8n1O.jpg",
+      "backdropUrl": "https://image.tmdb.org/t/p/original/87ivK4zWc5d5QcO3Xo0jZ9V8n1O.jpg",
+      "trailerUrl": "https://www.youtube.com/watch?v=y1-w1pUGuz4",
+      "genre": [
+        "Sci-Fi",
+        "Mythology",
+        "Epic",
+        "Action"
+      ],
+      "duration": 180,
+      "rating": 9.1,
+      "votesCount": 310000,
+      "certification": "UA",
+      "language": "Telugu",
+      "director": "Nag Ashwin",
+      "featured": false,
+      "status": "COMING_SOON",
+      "releaseDate": "2027-01-14",
+      "cast": [
+        {
+          "name": "Prabhas",
+          "role": "Bhairava / Karna",
+          "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=100&q=80"
+        },
+        {
+          "name": "Amitabh Bachchan",
+          "role": "Ashwatthama",
+          "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80"
+        }
+      ],
+      "_id": "6ae010000000000000000053"
+    },
+    {
+      "title": "Avatar: Fire and Ash",
+      "description": "Jake Sully and Neytiri encounter the aggressive Ash People, a fiery volcanic Na'vi clan on Pandora led by Varang, testing their family's bond and survival against new perils.",
+      "posterUrl": "https://image.tmdb.org/t/p/original/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg",
+      "backdropUrl": "https://image.tmdb.org/t/p/original/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg",
+      "trailerUrl": "https://www.youtube.com/watch?v=d9MyW72ELq0",
+      "genre": [
+        "Sci-Fi",
+        "Adventure",
+        "Action",
+        "Epic"
+      ],
+      "duration": 192,
+      "rating": 9,
+      "votesCount": 450000,
+      "certification": "UA",
+      "language": "English",
+      "director": "James Cameron",
+      "featured": false,
+      "status": "COMING_SOON",
+      "releaseDate": "2026-12-19",
+      "cast": [
+        {
+          "name": "Sam Worthington",
+          "role": "Jake Sully",
+          "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=100&q=80"
+        },
+        {
+          "name": "Zoe Saldana",
+          "role": "Neytiri",
+          "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80"
+        }
+      ],
+      "_id": "6ae010000000000000000054"
     }
   ],
   "showtimes": [

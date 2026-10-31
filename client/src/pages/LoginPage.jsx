@@ -14,6 +14,8 @@ const LoginPage = () => {
   const [otpCode, setOtpCode] = useState('');
   const [otpStep, setOtpStep] = useState('input'); // 'input' | 'verify'
   const [deliveryMethod, setDeliveryMethod] = useState(null); // 'email' | 'sms'
+  const [incomingOtp, setIncomingOtp] = useState(null);
+  const [smsSender, setSmsSender] = useState('IMovie');
   const [countdown, setCountdown] = useState(0);
 
   const [error, setError] = useState(null);
@@ -76,10 +78,16 @@ const LoginPage = () => {
       setDeliveryMethod(isEmail ? 'email' : 'sms');
       setOtpStep('verify');
       setCountdown(60);
+      if (res.otp) {
+        setIncomingOtp(res.otp);
+      }
+      if (res.sender) {
+        setSmsSender(res.sender);
+      }
       setSuccessMsg(
         isEmail
-          ? `OTP is sent to your Email (${identifier})`
-          : `OTP is sent as an SMS message to (${identifier})`
+          ? `[IMovie] OTP sent to your Email (${identifier})`
+          : `[IMovie] OTP SMS dispatched to (${identifier})`
       );
     } else {
       setError(res.message);
@@ -284,6 +292,7 @@ const LoginPage = () => {
                         onClick={() => {
                           setOtpStep('input');
                           setOtpCode('');
+                          setIncomingOtp(null);
                           setError(null);
                         }}
                         className="btn btn-outline-secondary btn-sm py-1 px-2 text-white small"
@@ -291,6 +300,30 @@ const LoginPage = () => {
                         Change
                       </button>
                     </div>
+
+                    {/* IMovie Mobile SMS Notification Card */}
+                    {incomingOtp && (
+                      <div className="card bg-dark border border-danger border-opacity-75 p-3 mb-3 shadow rounded-3">
+                        <div className="d-flex align-items-center justify-content-between mb-2">
+                          <span className="badge bg-danger text-white fw-bold d-inline-flex align-items-center gap-1 px-2 py-1">
+                            <i className="bi bi-chat-left-dots-fill"></i> SMS from {smsSender || 'IMovie'}
+                          </span>
+                          <span className="badge bg-secondary-subtle text-light small">Just Now</span>
+                        </div>
+                        <div className="bg-black bg-opacity-50 p-2 rounded border border-secondary border-opacity-25 mb-2">
+                          <code className="text-warning small d-block">
+                            [{smsSender || 'IMovie'}] Your verification code is: <span className="fs-6 fw-bold text-white text-decoration-underline">{incomingOtp}</span>. Valid for 5 minutes.
+                          </code>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-warning btn-sm fw-bold text-dark d-flex align-items-center justify-content-center gap-1 shadow-sm"
+                          onClick={() => setOtpCode(incomingOtp)}
+                        >
+                          <i className="bi bi-lightning-charge-fill"></i> Auto-Fill Code ({incomingOtp})
+                        </button>
+                      </div>
+                    )}
 
                     <div className="mb-4">
                       <label className="form-label text-secondary small fw-semibold">

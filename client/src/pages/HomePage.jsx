@@ -20,6 +20,7 @@ const HomePage = () => {
   const [movies, setMovies] = useState([]);
   const [filteredMovies, setFilteredMovies] = useState([]);
   const [featuredMovie, setFeaturedMovie] = useState(null);
+  const [statusTab, setStatusTab] = useState('ALL'); // 'ALL' | 'NOW_SHOWING' | 'COMING_SOON'
   const [selectedLanguage, setSelectedLanguage] = useState('All');
   const [selectedGenre, setSelectedGenre] = useState('All');
   const [genres, setGenres] = useState([]);
@@ -56,9 +57,13 @@ const HomePage = () => {
     }
   };
 
-  // Filter effect based on Language industry, Search, and Genre
+  // Filter effect based on Status Tab (Now Showing / Coming Soon), Language industry, Search, and Genre
   useEffect(() => {
     let result = [...movies];
+
+    if (statusTab !== 'ALL') {
+      result = result.filter((m) => m.status === statusTab);
+    }
 
     if (selectedLanguage !== 'All') {
       result = result.filter((m) => m.language === selectedLanguage);
@@ -80,7 +85,7 @@ const HomePage = () => {
     }
 
     setFilteredMovies(result);
-  }, [searchTerm, selectedLanguage, selectedGenre, movies]);
+  }, [searchTerm, selectedLanguage, selectedGenre, statusTab, movies]);
 
   // Convert youtube url to embed format
   const getEmbedUrl = (url) => {
@@ -241,6 +246,40 @@ const HomePage = () => {
                 {g}
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Release Status Navigation: Now Showing vs Upcoming / Coming Soon */}
+        <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+          <div className="nav nav-pills gap-2 bg-dark bg-opacity-75 p-1 rounded-pill border border-secondary border-opacity-50">
+            <button
+              onClick={() => setStatusTab('ALL')}
+              className={`nav-link rounded-pill px-4 py-2 fw-bold transition-all ${
+                statusTab === 'ALL' ? 'active bg-danger text-white shadow' : 'text-white-50'
+              }`}
+            >
+              <i className="bi bi-collection-play me-1"></i> All Movies ({movies.length})
+            </button>
+            <button
+              onClick={() => setStatusTab('NOW_SHOWING')}
+              className={`nav-link rounded-pill px-4 py-2 fw-bold transition-all ${
+                statusTab === 'NOW_SHOWING' ? 'active bg-danger text-white shadow' : 'text-white-50'
+              }`}
+            >
+              <i className="bi bi-ticket-perforated-fill me-1 text-warning"></i> Now Showing ({movies.filter((m) => m.status === 'NOW_SHOWING').length})
+            </button>
+            <button
+              onClick={() => setStatusTab('COMING_SOON')}
+              className={`nav-link rounded-pill px-4 py-2 fw-bold transition-all ${
+                statusTab === 'COMING_SOON' ? 'active bg-warning text-dark shadow' : 'text-warning'
+              }`}
+            >
+              <i className="bi bi-rocket-takeoff-fill me-1 text-danger"></i> Coming Soon ({movies.filter((m) => m.status === 'COMING_SOON').length})
+            </button>
+          </div>
+
+          <div className="text-secondary small fw-medium">
+            Showing <span className="text-white fw-bold">{filteredMovies.length}</span> titles
           </div>
         </div>
 

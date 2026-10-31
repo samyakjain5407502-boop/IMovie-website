@@ -237,7 +237,37 @@ const MovieDetailsPage = () => {
 
       {/* Showtimes & Theaters Section */}
       <section className="container py-4" id="showtimes-section">
-        <div className="glass-card p-4">
+        {movie.status === 'COMING_SOON' ? (
+          <div className="glass-card p-5 text-center border-warning border-opacity-50">
+            <div className="badge bg-warning text-dark fs-6 px-3 py-2 mb-3 fw-bold shadow">
+              <i className="bi bi-rocket-takeoff-fill me-1"></i> UPCOMING CINEMATIC RELEASE
+            </div>
+            <h2 className="text-white fw-bold mb-2">Releasing Soon in IMovie Multiplexes!</h2>
+            <p className="text-secondary lead mx-auto mb-4" style={{ maxWidth: '650px', fontSize: '1.05rem' }}>
+              Advance ticket bookings for <strong className="text-white">{movie.title}</strong> will open shortly across all theaters in India. Watch the official teaser trailer below and get ready!
+            </p>
+            {movie.trailerUrl && (
+              <div className="ratio ratio-16x9 mx-auto rounded-4 overflow-hidden shadow-lg border border-secondary border-opacity-50" style={{ maxWidth: '850px' }}>
+                <iframe
+                  src={movie.trailerUrl.includes('embed/') ? movie.trailerUrl : movie.trailerUrl.replace('watch?v=', 'embed/')}
+                  title={`${movie.title} Trailer`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              </div>
+            )}
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => alert(`You have subscribed to alerts for ${movie.title}! We will notify you when advance bookings open.`)}
+                className="btn btn-warning btn-lg px-4 fw-bold shadow text-dark"
+              >
+                <i className="bi bi-bell-fill me-2"></i> Notify Me When Booking Opens
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="glass-card p-4">
           <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 border-bottom border-secondary border-opacity-25 pb-3">
             <div>
               <h3 className="text-white fw-bold mb-1 d-flex align-items-center gap-2">
@@ -332,6 +362,7 @@ const MovieDetailsPage = () => {
             </div>
           )}
         </div>
+        )}
       </section>
     </div>
   );
