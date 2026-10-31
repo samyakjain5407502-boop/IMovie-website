@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import API from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 // ─── FORMAT BADGE CONFIG ─────────────────────────────────────────────────────
 const FORMAT_CONFIG = {
@@ -59,6 +60,7 @@ const FormatBadge = ({ format, size = 'sm' }) => {
 const MovieDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { selectedCity: authCity, changeCity } = useAuth();
 
   const [movie, setMovie] = useState(null);
   const [showtimes, setShowtimes] = useState([]);
@@ -66,8 +68,15 @@ const MovieDetailsPage = () => {
   const [availableDates, setAvailableDates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedCity, setSelectedCity] = useState('All');
+  const [selectedCity, setSelectedCity] = useState(authCity || 'Indore');
   const [selectedFormat, setSelectedFormat] = useState('All');
+
+  // Keep in sync with auth city if changed from navbar
+  useEffect(() => {
+    if (authCity) {
+      setSelectedCity(authCity);
+    }
+  }, [authCity]);
 
   // Helper to format dates
   const formatDateDisplay = (dateStr) => {
@@ -120,7 +129,11 @@ const MovieDetailsPage = () => {
   const filteredShowtimes = showtimes.filter((s) => s.date === selectedDate);
 
   // Get unique cities and formats for filter
-  const allCities = ['All', ...Array.from(new Set(filteredShowtimes.map(s => s.city || 'Other').filter(Boolean))).sort()];
+  const uniqueCities = Array.from(new Set(filteredShowtimes.map(s => s.city || 'Other').filter(Boolean)));
+  const preferredOrder = ['Indore', 'Mumbai', 'Delhi', 'Bengaluru', 'Hyderabad', 'Pune', 'Chennai', 'Kolkata'];
+  const sortedCities = preferredOrder.filter(c => uniqueCities.includes(c));
+  const otherCities = uniqueCities.filter(c => !preferredOrder.includes(c));
+  const allCities = ['All', ...sortedCities, ...otherCities];
   const allFormats = ['All', ...Array.from(new Set(filteredShowtimes.map(s => s.format))).sort()];
 
   // Apply city + format filters
@@ -372,24 +385,37 @@ const MovieDetailsPage = () => {
               </div>
             </div>
 
-            {/* City & Format Filters */}
-            <div className="d-flex flex-wrap gap-3 mb-4 align-items-center">
-              {/* City filter */}
-              <div className="d-flex align-items-center gap-2">
-                <i className="bi bi-geo-alt text-danger"></i>
-                <span className="text-secondary small fw-semibold">City:</span>
-                <div className="d-flex flex-wrap gap-1">
-                  {allCities.map(city => (
-                    <button
-                      key={city}
-                      onClick={() => setSelectedCity(city)}
-                      className={`btn btn-sm py-1 px-2 rounded-pill ${selectedCity === city ? 'btn-danger' : 'btn-outline-secondary'}`}
-                      style={{ fontSize: '0.75rem' }}
-                    >
-                      {city}
-                    </button>
-                  ))}
+            {/* City Selection Bar (BookMyShow style) */}
+            <div className="p-3 mb-4 rounded-3 border border-secondary border-opacity-25 bg-dark bg-opacity-75">
+              <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                <div className="d-flex align-items-center gap-2">
+                  <i className="bi bi-geo-alt-fill text-danger fs-5"></i>
+                  <span className="text-white fw-bold small text-uppercase">Select City:</span>
                 </div>
+                <span className="text-secondary small">
+                  Showing theaters in <strong className="text-danger">{selectedCity === 'All' ? 'All Cities' : selectedCity}</strong>
+                </span>
+              </div>
+              <div className="d-flex flex-wrap gap-2">
+                {allCities.map(city => (
+                  <button
+                    key={city}
+                    onClick={() => {
+                      setSelectedCity(city);
+                      if (city !== 'All' && changeCity) changeCity(city);
+                    }}
+                    className={`btn btn-sm px-3 py-1 rounded-pill transition-all ${
+                      selectedCity === city
+                        ? 'btn-danger fw-bold shadow'
+                        : 'btn-outline-secondary text-light'
+                    }`}
+                    style={{ fontSize: '0.8rem' }}
+                  >
+                    <i className="bi bi-pin-map-fill me-1"></i>
+                    {city}
+                    {city === 'Indore' && ' (TI Mall, C21, Orbit)'}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -399,7 +425,7 @@ const MovieDetailsPage = () => {
               <span className="text-secondary small fw-semibold">Format:</span>
               <button
                 onClick={() => setSelectedFormat('All')}
-                className={`btn btn-sm py-1 px-2 rounded-pill ${selectedFormat === 'All' ? 'btn-warning text-dark' : 'btn-outline-secondary'}`}
+                className={`btn btn-sm py-1 px-3 rounded-pill ${selectedFormat === 'All' ? 'btn-warning text-dark fw-bold' : 'btn-outline-secondary'}`}
                 style={{ fontSize: '0.75rem' }}
               >
                 All Formats

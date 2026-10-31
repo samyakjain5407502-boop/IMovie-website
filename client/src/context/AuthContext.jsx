@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedCity, setSelectedCity] = useState(() => {
-    return localStorage.getItem('imovies_city') || 'Mumbai';
+    return localStorage.getItem('imovies_city') || 'Indore';
   });
 
   const changeCity = (city) => {
