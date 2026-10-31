@@ -2,8 +2,20 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
-const nodemailer = require('nodemailer');
-const twilio = require('twilio');
+let nodemailer;
+try {
+  nodemailer = require('nodemailer');
+} catch (_) {
+  nodemailer = null;
+}
+
+let twilio;
+try {
+  twilio = require('twilio');
+} catch (_) {
+  twilio = null;
+}
+
 const { connectDB } = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 
